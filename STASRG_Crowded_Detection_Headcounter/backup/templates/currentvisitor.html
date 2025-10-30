@@ -3,15 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crowded Detection</title>
-    <link href="{{ url_for('static', filename='css/tailwind.min.css') }}" rel="stylesheet">
-    <link rel="icon" type="image/png" href="{{url_for('static', filename='logo_stasrg.png')}}">
+    <title>Pengunjung Saat Ini</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{url_for('static', filename='logo G.png')}}">
+    <script>
+        async function fetchCountData() {
+            try {
+                const response = await fetch('/count_data');
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                
+                const data = await response.json();
+                document.getElementById('current-count').textContent = data.current_count;
+            } catch (error) {
+                console.error('Error fetching count data:', error);
+            }
+        }
+
+        function initializeCountUpdater() {
+            fetchCountData();
+            setInterval(fetchCountData, 2000);
+        }
+
+        window.addEventListener('load', initializeCountUpdater);
+    </script>
 </head>
 <body class="bg-gray-200 flex flex-col min-h-screen">
     <header class="bg-white shadow-md p-4">
         <div class="container mx-auto flex justify-between items-center">
-            <div><img id="logo" src="{{url_for('static', filename='stas.png')}}" alt="Logo" class="h-10 transition-opacity duration-300"></div>
-            <!-- <h2 class="text-3xl font-bold text-center flex-grow">Crowded Detection</h2> -->
+            <img id="logo" src="{{url_for('static', filename='stas.png')}}" alt="Logo" class="h-10 transition-opacity duration-300">
+            <h2 class="text-3xl font-bold text-center flex-grow">Crowded Detection</h2>
             <div class="flex space-x-4">
                 <button onclick="resetCount()" class="text-red-500 font-bold hover:text-red-700">
                     Reset Count
@@ -21,48 +41,30 @@
                 </button>
             </div>
         </div>
-    </header>
-    <div class="container mx-auto p-4 flex-grow">
-        <div class="bg-white shadow-md rounded-lg p-4 mb-4">
-            <h3 class="text-xl font-semibold text-center mb-4">Crowd Status</h3>
-            <p id="crowdStatus" class="text-center text-2xl font-bold">Normal</p>
-        </div>
-        <div class="grid grid-cols-2 gap-2 mb-6">
-            <div class="bg-white shadow-md rounded-lg p-8 text-center">
-                <h3 class="text-3xl font-semibold">Current Count</h3>
-                <p class="font-bold text-blue-600 text-center" style="font-size: 200px !important;" id="current_count">0</p>
+    </header>    
+    <div class="container mx-auto p-4 flex-grow ">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="bg-white shadow-md rounded-lg p-6 mb-4">
+                <h2 class="text-5xl font-semibold text-center">Pengunjung Saat Ini</h2>
+                <p class="font-bold text-blue-600 text-center" style="font-size: 300px !important;" id="current-count">0</p>
             </div>
-            <div class="bg-white shadow-md rounded-lg p-8 text-center">
+            <div class="bg-white shadow-md rounded-lg p-4 mb-4">
                 <h3 class="text-xl font-semibold text-center mb-4">Live Video</h3>
                 <img src="{{ url_for('video_feed') }}" alt="Live Video Feed" class="w-full max-w-md mx-auto rounded-lg">
             </div>
         </div>
         <div class="bg-white shadow-md rounded-lg p-4 mb-4">
-            <h3 class="text-2xl font-semibold text-center">Total Count</h3>
-            <p class="text-5xl font-bold text-green-600 text-center" id="total_count">0</p>
+            <h3 class="text-xl font-semibold text-center mb-4">Crowd Status</h3>
+            <p id="crowdStatus" class="text-center text-2xl font-bold">Normal</p>
         </div>
+        <div class="bg-white shadow-md rounded-lg p-4 mb-4">
+            <a href="/" class="bg-blue-500 hover:bg-blue-700 text-white text-center font-bold py-2 px-4 rounded">Kembali</a>
+        </div>
+    </div>
+
+
 </body>
-<script>
-    async function fetchCountData() {
-        try {
-            const response = await fetch('/count_data');
-            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-            
-            const data = await response.json();
-            document.getElementById('current-count').textContent = data.current_count;
-            document.getElementById('total-count').textContent = data.total_count;
-        } catch (error) {
-            console.error('Error fetching count data:', error);
-        }
-    }
 
-    function initializeCountUpdater() {
-        fetchCountData();
-        setInterval(fetchCountData, 2000);
-    }
-
-    window.addEventListener('load', initializeCountUpdater);
-</script>
 <script>
     const logos = [
         "{{url_for('static', filename='stas.png')}}",
@@ -85,6 +87,7 @@
 
     setInterval(changeLogo, 3000);
 </script>
+
 <script>
     function updateCrowdStatus() {
         fecth('/crowd_status')
@@ -103,6 +106,7 @@
     }
     setInterval(updateCrowdStatus, 2000);
 </script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     function updateCount() {
         fetch('/count_data')

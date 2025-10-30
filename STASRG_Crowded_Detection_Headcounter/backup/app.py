@@ -1,40 +1,25 @@
 import cv2
 import numpy as np
 import pandas as pd
-import webbrowser
 from ultralytics import YOLO
 from scipy.spatial import distance as dist
 from collections import OrderedDict, deque, defaultdict
-from flask import Flask, Response, render_template, jsonify, send_file, request
+from flask import Flask, Response, render_template, jsonify, send_file
 from datetime import datetime, timedelta
 from io import BytesIO
-from threading import Thread
-import time
-import subprocess
 
 # Inisialisasi Flask
 app = Flask(__name__)
 
-# NEW: ERROR HANDLING
 # Inisialisasi YOLOv8 model
-try:
-    model = YOLO('survei2.pt') 
-except Exception as e:
-    print(f"Error loading Yolo model: {e}")
-    model = None
-
-# Inisialisasi YOLOv8 model
-try:
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        raise IOError("Tidak bisa membuka KAMERA")
-except IOError as e:
-    print(f"FATAL ERROR: {e}. Kamera mungkin tidak terpasang.")
-    cap = None
+model = YOLO('survei2.pt') 
+#video_path = 'D:/TEL U/STAS-RG/Computer Vision/coba detection/Video/DJI_0027.MP4'
+index_ibe = 0
+cap = cv2.VideoCapture(index_ibe)
 
 confidence_threshold = 0.3
 
-# --- CENTROID TRACKER CLASS ---
+# Centroid Tracker class
 class CentroidTracker:
     def __init__(self, maxDisappeared=50, distanceThreshold=50):
         self.nextObjectID = 0
@@ -51,6 +36,7 @@ class CentroidTracker:
     def deregister(self, objectID):
         del self.objects[objectID]
         del self.disappeared[objectID]
+
 
     def update(self, rects):
         if len(rects) == 0:
@@ -117,43 +103,35 @@ class CentroidTracker:
         return self.objects
 
 
-# --- GLOBAL TRACKING VARIABLE ---
+# Inisialisasi Centroid Tracker
 dt = CentroidTracker()
 total_count = 0
 current_count = 0
-visitor_data = deque(maxlen=500) # maxlen untuk memory safety. perlu dicrosscek
+visitor_data = deque()
 reset_flag = False
 last_saved_time = datetime.now()
 
-# --- VIDEO GENERATOR FUNCTION ---
+# Fungsi untuk mengenerate frame video
 def generate_frame():
     global total_count, current_count, visitor_data, last_saved_time, reset_flag
-
-    if cap is None or model is None:
-        print("Tidak menginisialisasi video capture. Tidak bisa generate frame.")
-        return
     
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("Error: Gagal membaca frame dari kamera.")
             break
 
         if reset_flag:
             current_count = 0
-            # NEW: Reinitialize tracker
-            # dt = CentroidTracker()
             reset_flag = False
 
         else:
-            # 1. Deteksi objek dengan YOLO. Ibe added verbose
-            results = model(frame, verbose=False)
-
-            # Filter untuk orang (class_id=0) dan confidence threshold
+            # Deteksi objek dengan YOLO
+            results = model(frame)
             persons = [d for d in results[0].boxes.data if int(d[5]) == 0 and d[4].item() >= confidence_threshold]
             rects = []
         
-            # 2. Gambar bounding box untuk setiap objek yang terdeteksi
+
+            # Gambar bounding box untuk setiap objek yang terdeteksi
             for person in persons:
                 x1, y1, x2, y2, conf, cls = person.tolist()
                 rects.append((int(x1), int(y1), int(x2), int(y2)))
@@ -162,49 +140,46 @@ def generate_frame():
             text = f"{conf:.2f}"
             cv2.putText(frame, text, (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
-            # 3. Update tracker
+            # Update tracker
             objects = dt.update(rects)
             current_count = len(objects)
 
-            # 4. Update total count based on registered IDs
             if dt.nextObjectID > total_count:
                 total_count = dt.nextObjectID
 
-            # 5. Draw IDs dan centroids
+            # Simpan data waktu dan jumlah pengunjung
+            timestamp = datetime.now()
+
+            if (timestamp - last_saved_time).total_seconds()>=60:
+                visitor_data.append({"time": timestamp.strftime('%H:%M:%S'),"count": current_count})
+                last_saved_time = timestamp
+
             for objectID, centroid in objects.items():
                 text = f"ID {objectID}"
                 cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
                 cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
-            
-            # 6. Simpan data waktu dan jumlah pengunjung
-            timestamp = datetime.now()
-            if (timestamp - last_saved_time).total_seconds()>=30:
-                visitor_data.append({"time": timestamp.strftime('%H:%M:%S'),"count": current_count, "total count": total_count})
-                last_saved_time = timestamp
 
-        # 7. Konversi frame ke format JPEG
+
+        # Konversi frame ke format JPEG
         _, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
 
-        # 8. Kirim frame ke browser
+        # Kirim frame ke browser
         yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
         
-#
-# --- FLASK ROUTE ---
-#
 
 # Route untuk halaman utama
 @app.route('/')
 def index():
     return render_template('hasilcount.html')
 
+
 # Route untuk video feed
 @app.route('/video_feed')
 def video_feed():
-    if cap is None:
-        return Response("Error: Kamera tidak diinisialisasi", status=503)
     return Response(generate_frame(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
 
 # Route untuk data jumlah orang
 @app.route('/count_data')
@@ -219,17 +194,21 @@ def count_data():
 def visitor_data_route():
     return jsonify(list(visitor_data))
 
+
+
 @app.route('/download_excel')
 def download_excel():
-    # Buat data frame dari data pengunjung
+    
+    #buat data frame dari data pengunjung
     df = pd.DataFrame(visitor_data)
 
-    # Simpan file excel ke memori menggunakan BytesIO
+
+    #simpan file excel ke memori menggunakan BytesIO
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Visitor Data')
 
-    # Kirim file untuk diunduh
+    #simpan file untuk diunduh
     output.seek(0)
     return send_file(output, 
                     as_attachment=True, 
@@ -254,44 +233,11 @@ def reset_count():
     current_count = 0
     visitor_data.clear()
     dt.nextObjectID = 0
-    reset_flag = True # Signal
+    reset_flag = True
     return jsonify({"message": "Count reset successfully", 
                     "current_count": current_count, 
                     "total_count": total_count})
 
-# --- UTILITY AND RUN APP ---
-def open_browser():
-    """
-    Launches the application URL in Google Chrome's 'App Mode' 
-    to simulate a native desktop window (PWA-like).
-    """
-    time.sleep(2)   
-    app_url = 'http://127.0.0.1:5000/'
-    
-    # 1. Define the path to your browser executable
-    # NOTE: Adjust this path if Chrome is installed elsewhere.
-    chrome_path = "C:/Program Files/Google/Chrome/Application/chrome.exe"
-    
-    try:
-        # 2. Use subprocess to run the command with the --app flag
-        subprocess.Popen([chrome_path, f"--app={app_url}"])
-        print(f"Launching app in Chrome App Mode: {app_url}")
-        
-    except FileNotFoundError:
-        # Fallback to standard webbrowser if Chrome path is wrong or Chrome is not installed
-        print("Chrome executable not found. Falling back to default browser tab.")
-        webbrowser.open_new_tab(app_url)
-    except Exception as e:
-        print(f"An error occurred while launching browser: {e}")
-
-# def open_browser():
-#     # Wait a moment for the server to start before launching the browser
-#     webbrowser.open_new_tab('http://127.0.0.1:5000/')
-
 # Jalankan aplikasi Flask
 if __name__ == "__main__":
-
-    # Launch browser in a separate thread to avoid blocking the Flask startup
-    Thread(target=open_browser).start()
-    
-    app.run(debug=False, use_reloader=False)
+    app.run(debug=True)
