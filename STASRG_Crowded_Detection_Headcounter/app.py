@@ -14,7 +14,7 @@ app = Flask(__name__)
 # Inisialisasi YOLOv8 model
 model = YOLO('survei2.pt') 
 #video_path = 'D:/TEL U/STAS-RG/Computer Vision/coba detection/Video/DJI_0027.MP4'
-index_ibe = 1
+index_ibe = 0
 cap = cv2.VideoCapture(index_ibe)
 
 confidence_threshold = 0.3

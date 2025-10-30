@@ -1,6 +1,10 @@
-opencv-python
-numpy
+opencv-python 
+numpy 
 pandas
-ultralytics
+ultralytics 
 scipy
-flask
+flask 
+openpyxl 
+matplotlib 
+torch 
+torchvision
