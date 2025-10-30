@@ -8,22 +8,26 @@ from collections import OrderedDict, deque, defaultdict
 from flask import Flask, Response, render_template, jsonify, send_file, request
 from datetime import datetime, timedelta
 from io import BytesIO
+import threading
 from threading import Thread
 import time
 import subprocess
+import os
 
 # Inisialisasi Flask
 app = Flask(__name__)
 
-# NEW: ERROR HANDLING
 # Inisialisasi YOLOv8 model
+print("Status: Loading Computer Vision Model... Mungkin butuh waktu.")
 try:
     model = YOLO('survei2.pt') 
 except Exception as e:
     print(f"Error loading Yolo model: {e}")
     model = None
+print("Status: Model loaded successfully.")
 
 # Inisialisasi YOLOv8 model
+print("Status: Inisialisasi Webcam...")
 try:
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -31,6 +35,7 @@ try:
 except IOError as e:
     print(f"FATAL ERROR: {e}. Kamera mungkin tidak terpasang.")
     cap = None
+print("Status: Inisialisasi berhasil. Memulai Flask server...")
 
 confidence_threshold = 0.3
 
@@ -116,7 +121,6 @@ class CentroidTracker:
 
         return self.objects
 
-
 # --- GLOBAL TRACKING VARIABLE ---
 dt = CentroidTracker()
 total_count = 0
@@ -125,13 +129,21 @@ visitor_data = deque(maxlen=500) # maxlen untuk memory safety. perlu dicrosscek
 reset_flag = False
 last_saved_time = datetime.now()
 
+# NEW: Variables for Stabilization Delay
+CV_START_TIME = datetime.now()
+STABILIZATION_DELAY_SECONDS = 8 # Time (in seconds) to wait before tracking starts
+
 # --- VIDEO GENERATOR FUNCTION ---
 def generate_frame():
-    global total_count, current_count, visitor_data, last_saved_time, reset_flag
+    global total_count, current_count, visitor_data, last_saved_time, reset_flag, CV_START_TIME, STABILIZATION_DELAY_SECONDS, dt
 
     if cap is None or model is None:
         print("Tidak menginisialisasi video capture. Tidak bisa generate frame.")
         return
+    
+    # Ensure the start time is set right when the generator is first called (when video_feed is requested)
+    if (datetime.now() - CV_START_TIME).total_seconds() > STABILIZATION_DELAY_SECONDS:
+        CV_START_TIME = datetime.now()
     
     while True:
         ret, frame = cap.read()
@@ -144,6 +156,29 @@ def generate_frame():
             # NEW: Reinitialize tracker
             # dt = CentroidTracker()
             reset_flag = False
+
+        # ----------------------------------------------------
+        # --- NEW STABILIZATION DELAY CHECK ---
+        # ----------------------------------------------------
+        elapsed_seconds = (datetime.now() - CV_START_TIME).total_seconds()
+        
+        if elapsed_seconds < STABILIZATION_DELAY_SECONDS:
+            
+            # Calculate remaining time for the display
+            remaining_time = int(STABILIZATION_DELAY_SECONDS - elapsed_seconds)
+            
+            # Display stabilization status
+            status_text = f"Stabilisasi: {remaining_time}s. Tunggu..."
+            # Center the status text on the frame
+            text_size = cv2.getTextSize(status_text, cv2.FONT_HERSHEY_SIMPLEX, 1.0, 3)[0]
+            text_x = (frame.shape[1] - text_size[0]) // 2
+            text_y = (frame.shape[0] + text_size[1]) // 2
+            
+            cv2.putText(frame, status_text, (text_x, text_y), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 255), 3)
+            
+            # Ensure counts are reported as zero during stabilization
+            current_frame_count = 0
 
         else:
             # 1. Deteksi objek dengan YOLO. Ibe added verbose
@@ -180,6 +215,7 @@ def generate_frame():
             timestamp = datetime.now()
             if (timestamp - last_saved_time).total_seconds()>=30:
                 visitor_data.append({"time": timestamp.strftime('%H:%M:%S'),"count": current_count, "total count": total_count})
+                # visitor_data.append({"waktu": timestamp.strftime('%H:%M:%S'),"pengunjung": current_count, "total semua pengunjung": total_count})
                 last_saved_time = timestamp
 
         # 7. Konversi frame ke format JPEG
@@ -259,32 +295,60 @@ def reset_count():
                     "current_count": current_count, 
                     "total_count": total_count})
 
+@app.route('/shutdown', methods=['POST'])
+def shutdown():
+    """Shuts down the running Flask server."""
+    func = request.environ.get('werkzeug.server.shutdown')
+    
+    if cap and cap.isOpened():
+        cap.release() 
+
+    print("\n--- Menerima sinyal shutdown dari browser. Mematikan aplikasi... ---")
+    threading.Thread(target=lambda: time.sleep(1) or os._exit(0)).start()
+    return jsonify({"success": True, "message": "Application is closing."})
+
 # --- UTILITY AND RUN APP ---
 def open_browser():
+    """Launches the application URL in a browser's 'App Mode' for a PWA-like 
+    experience, falling back from Chrome to Edge if Chrome is not found.
     """
-    Launches the application URL in Google Chrome's 'App Mode' 
-    to simulate a native desktop window (PWA-like).
-    """
-    time.sleep(2)   
+    # Wait for the Flask server and the CV thread to start up
+    time.sleep(2) 
+    
     app_url = 'http://127.0.0.1:5000/'
     
-    # 1. Define the path to your browser executable
-    # NOTE: Adjust this path if Chrome is installed elsewhere.
-    chrome_path = "C:/Program Files/Google/Chrome/Application/chrome.exe"
-    
-    try:
-        # 2. Use subprocess to run the command with the --app flag
-        subprocess.Popen([chrome_path, f"--app={app_url}"])
-        print(f"Launching app in Chrome App Mode: {app_url}")
-        
-    except FileNotFoundError:
-        # Fallback to standard webbrowser if Chrome path is wrong or Chrome is not installed
-        print("Chrome executable not found. Falling back to default browser tab.")
-        webbrowser.open_new_tab(app_url)
-    except Exception as e:
-        print(f"An error occurred while launching browser: {e}")
+    browser_paths = [
+        # 1. Google Chrome (Standard 64-bit path)
+        "C:/Program Files/Google/Chrome/Application/chrome.exe",
+        # 2. Microsoft Edge (Standard 64-bit path)
+        "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    ]
 
-# def open_browser():
+    launched = False
+    
+    for browser_path in browser_paths:
+        if os.path.exists(browser_path):
+            try:
+                # Use subprocess to run the command with the --app flag
+                subprocess.Popen([
+                    browser_path, 
+                    f"--app={app_url}",
+                    "--start-fullscreen"
+                    ])
+                print(f"Launching app in App Mode using: {os.path.basename(browser_path)}")
+                launched = True
+                break # Exit the loop once successfully launched
+                
+            except Exception as e:
+                print(f"Error launching {os.path.basename(browser_path)}: {e}")
+                continue # Try the next browser path
+
+    if not launched:
+        # Fallback to standard webbrowser if no App Mode browser could be found
+        print("No App Mode browser found. Falling back to default browser tab.")
+        webbrowser.open_new_tab(app_url)
+
+# def open_browser_simple():
 #     # Wait a moment for the server to start before launching the browser
 #     webbrowser.open_new_tab('http://127.0.0.1:5000/')
 

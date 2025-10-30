@@ -11,12 +11,11 @@
     <header class="bg-white shadow-md p-4">
         <div class="container mx-auto flex justify-between items-center">
             <div><img id="logo" src="{{url_for('static', filename='stas.png')}}" alt="Logo" class="h-10 transition-opacity duration-300"></div>
-            <!-- <h2 class="text-3xl font-bold text-center flex-grow">Crowded Detection</h2> -->
             <div class="flex space-x-4">
                 <button onclick="resetCount()" class="text-red-500 font-bold hover:text-red-700">
                     Reset Count
                 </button>
-                <button onclick="window.location.href='/download_excel'" class="text-green-500 font-bold hover:text-green-700">
+                <button onclick="downloadData()" class="text-green-500 font-bold hover:text-green-700">
                     Download Data
                 </button>
             </div>
@@ -25,7 +24,7 @@
     <div class="container mx-auto p-4 flex-grow">
         <div class="bg-white shadow-md rounded-lg p-4 mb-4">
             <h3 class="text-xl font-semibold text-center mb-4">Crowd Status</h3>
-            <p id="crowdStatus" class="text-center text-2xl font-bold">Normal</p>
+            <p id="crowdStatus" class="text-center text-2xl font-bold">Crowd</p>
         </div>
         <div class="grid grid-cols-2 gap-2 mb-6">
             <div class="bg-white shadow-md rounded-lg p-8 text-center">
@@ -43,27 +42,32 @@
         </div>
 </body>
 <script>
-    async function fetchCountData() {
-        try {
-            const response = await fetch('/count_data');
-            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-            
-            const data = await response.json();
-            document.getElementById('current-count').textContent = data.current_count;
-            document.getElementById('total-count').textContent = data.total_count;
-        } catch (error) {
-            console.error('Error fetching count data:', error);
-        }
-    }
+    // --- GLOBAL STATE ---
+    // Flag to prevent the shutdown routine from running when a download is clicked
+    let is_downloading = false; 
 
-    function initializeCountUpdater() {
-        fetchCountData();
-        setInterval(fetchCountData, 2000);
-    }
+    function downloadData() {
+        // 1. Set the flag to true immediately before navigating
+        is_downloading = true;
+        
+        // 2. Initiate the navigation which triggers the file download
+        window.location.href = '/download_excel';
 
-    window.addEventListener('load', initializeCountUpdater);
+        // 3. Reset the flag shortly after the navigation occurs.
+        // This allows subsequent clicks to work and doesn't interfere with a real exit.
+        // 500ms (half a second) is enough time to handle the download trigger.
+        setTimeout(() => {
+            is_downloading = false;
+        }, 500); 
+    }
+    
+    // NOTE: Your original fetchCountData function used 'current-count' and 'total-count' 
+    // IDs which did not exist. I'm keeping the updateCount() function active below
+    // and removing the redundant initializeCountUpdater/fetchCountData logic above.
 </script>
+
 <script>
+    // Logo change script
     const logos = [
         "{{url_for('static', filename='stas.png')}}",
         "{{url_for('static', filename='btp.png')}}",
@@ -85,14 +89,16 @@
 
     setInterval(changeLogo, 3000);
 </script>
+
 <script>
     function updateCrowdStatus() {
-        fecth('/crowd_status')
+        // FIX: Corrected 'fecth' typo to 'fetch'
+        fetch('/crowd_status')
             .then(response => response.json())
             .then(data => {
                 let statusElement = document.getElementById('crowdStatus');
                 statusElement.innerText = data.status;
-
+                // FIX: B indo
                 if (data.status === 'Crowd') {
                     statusElement.style.color = "green";
                 } else {
@@ -103,6 +109,7 @@
     }
     setInterval(updateCrowdStatus, 2000);
 </script>
+
 <script>
     function updateCount() {
         fetch('/count_data')
@@ -125,4 +132,23 @@
             });
     }
 </script>
+
+<script>
+    // --- Shutdown Trigger ---
+    function sendShutdownSignal() {
+        // FIX 2: CHECK THE GLOBAL FLAG BEFORE SHUTTING DOWN
+        if (is_downloading) {
+            console.log("Shutdown avoided: Download flag is active.");
+            return; 
+        }
+
+        // Use navigator.sendBeacon for a non-blocking request that guarantees delivery
+        // even as the window is closing, as standard fetch() might be cancelled.
+        navigator.sendBeacon('/shutdown', new URLSearchParams());
+    }
+
+    // Attach the function to the event that fires when the window is closed
+    window.addEventListener('beforeunload', sendShutdownSignal);
+</script>
+
 </html>
