@@ -50,8 +50,8 @@ print("Status: Inisialisasi berhasil. Memulai Flask server...")
 # KODINGAN ADIB
 entry_line_position = 440
 exit_line_position = 200
-entry_count = 0 # Dimulai dari 0
-exit_count = 0 # Dimulai dari 0
+entry_count = 150 # Dimulai dari 0
+exit_count = 100 # Dimulai dari 0
 resize_width = 640   # Ubah sesuai kebutuhan
 resize_height = 480  # Ubah sesuai kebutuhan
 
