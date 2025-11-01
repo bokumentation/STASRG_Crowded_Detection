@@ -9,7 +9,7 @@ from flask import Flask, Response, render_template, jsonify, send_file, request
 from datetime import datetime, timedelta
 from io import BytesIO
 import threading
-from threading import Thread
+from threading import Thread, Lock
 import time
 import subprocess
 import os
@@ -129,6 +129,7 @@ class CentroidTracker:
         return self.objects
 
 # --- GLOBAL TRACKING VARIABLE ---
+data_lock = Lock()
 dt = CentroidTracker()
 total_count = 0
 current_count = 0
@@ -158,11 +159,13 @@ def generate_frame():
             print("Error: Gagal membaca frame dari kamera.")
             break
 
-        if reset_flag:
-            current_count = 0
-            # NEW: Reinitialize tracker
-            # dt = CentroidTracker()
-            reset_flag = False
+        
+        with data_lock:
+            if reset_flag:
+                current_count = 0
+                # NEW: Reinitialize tracker
+                dt = CentroidTracker()
+                reset_flag = False
 
         # ----------------------------------------------------
         # --- NEW STABILIZATION DELAY CHECK ---
@@ -206,11 +209,12 @@ def generate_frame():
 
             # 3. Update tracker
             objects = dt.update(rects)
-            current_count = len(objects)
+            with data_lock:
+                current_count = len(objects)
 
-            # 4. Update total count based on registered IDs
-            if dt.nextObjectID > total_count:
-                total_count = dt.nextObjectID
+                # 4. Update total count based on registered IDs
+                if dt.nextObjectID > total_count:
+                    total_count = dt.nextObjectID
 
             # 5. Draw IDs dan centroids
             for objectID, centroid in objects.items():
@@ -220,10 +224,11 @@ def generate_frame():
             
             # 6. Simpan data waktu dan jumlah pengunjung
             timestamp = datetime.now()
-            if (timestamp - last_saved_time).total_seconds()>=log_interval:
-                # visitor_data.append({"time": timestamp.strftime('%H:%M:%S'),"count": current_count, "total count": total_count})
-                visitor_data.append({"waktu": timestamp.strftime('%H:%M:%S'),"pengunjung": current_count, "total semua pengunjung": total_count})
-                last_saved_time = timestamp
+            with data_lock:
+                if (timestamp - last_saved_time).total_seconds()>=log_interval:
+                    # visitor_data.append({"time": timestamp.strftime('%H:%M:%S'),"count": current_count, "total count": total_count})
+                    visitor_data.append({"waktu": timestamp.strftime('%H:%M:%S'),"pengunjung": current_count, "total semua pengunjung": total_count})
+                    last_saved_time = timestamp
 
         # 7. Konversi frame ke format JPEG
         _, buffer = cv2.imencode('.jpg', frame)
@@ -252,20 +257,30 @@ def video_feed():
 # Route untuk data jumlah orang
 @app.route('/count_data')
 def count_data():
-    data = {
-        "current_count": current_count,
-        "total_count": total_count
-    }
+    with data_lock:
+        data = {
+            "current_count": current_count,
+            "total_count": total_count
+        }
     return jsonify(data)
 
 @app.route('/visitor_data')
 def visitor_data_route():
-    return jsonify(list(visitor_data))
+    with data_lock: # Read lock
+        # Create a copy of the data before releasing the lock
+        data_copy = list(visitor_data)
+    return jsonify(data_copy)
 
 @app.route('/download_excel')
 def download_excel():
     # Buat data frame dari data pengunjung
-    df = pd.DataFrame(visitor_data)
+    # df = pd.DataFrame(visitor_data)
+    with data_lock: # Read lock
+        # Create a copy of the data to process outside the lock
+        df_data = list(visitor_data) 
+
+    # Buat data frame dari data pengunjung (using the copied data)
+    df = pd.DataFrame(df_data)
 
     # Simpan file excel ke memori menggunakan BytesIO
     output = BytesIO()
@@ -276,7 +291,7 @@ def download_excel():
     output.seek(0)
     return send_file(output, 
                     as_attachment=True, 
-                    download_name='visitor_data.xlsx', 
+                    download_name=f"Crowd_Data_Headcounter_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx", 
                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                     )
 
@@ -293,11 +308,14 @@ def crowd_status():
 @app.route('/reset_count', methods=['POST'])
 def reset_count():
     global total_count, current_count, visitor_data, dt, reset_flag
-    total_count = 0
-    current_count = 0
-    visitor_data.clear()
-    dt.nextObjectID = 0
-    reset_flag = True # Signal
+
+    with data_lock:
+        total_count = 0
+        current_count = 0
+        dt.nextObjectID = 0
+        reset_flag = True 
+        # visitor_data.clear()
+
     return jsonify({"message": "Count reset successfully", 
                     "current_count": current_count, 
                     "total_count": total_count})

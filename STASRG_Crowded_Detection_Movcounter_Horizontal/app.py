@@ -14,7 +14,7 @@ from openpyxl.drawing.image import Image
 from io import BytesIO
 import matplotlib.pyplot as plt
 from datetime import datetime
-from threading import Thread
+from threading import Thread, Lock
 import threading
 
 print("######################################")
@@ -45,6 +45,8 @@ except IOError as e:
     cap = None
 print("Status: Inisialisasi berhasil. Memulai Flask server...")
 
+data_lock = Lock()
+
 # KODINGAN ADIB
 # Horizontal Line
 entry_line_position = 320
@@ -53,6 +55,13 @@ entry_count = 0 # Dimulai dari 0
 exit_count = 0 # Dimulai dari 0
 resize_width = 640   # Ubah sesuai kebutuhan
 resize_height = 480  # Ubah sesuai kebutuhan
+
+last_log_time = datetime.now()
+log_data = []
+object_prev_positions = {}
+counted_on_entry = set()
+counted_on_exit = set()
+log_interval_seconds = 5 # Log data every 5 seconds
 
 # Centroid tracker class to assign unique IDs to objects and track them
 class CentroidTracker:
@@ -124,9 +133,6 @@ class CentroidTracker:
         return self.objects
 
 ct = CentroidTracker()
-object_prev_positions = {}
-counted_on_entry = set()
-counted_on_exit = set()
 
 # cy for the horizontal
 def detect_direction(object_id, cy, prev_cy):
@@ -170,7 +176,18 @@ def detect_direction(object_id, cy, prev_cy):
 
 # Horizontal
 def generate_frames():
-    global entry_count, exit_count
+    global entry_count, exit_count, last_log_time
+
+    # Check for offline status (added a block for completeness, though omitted in your upload)
+    if cap is None or model is None:
+        blank_frame = np.zeros((resize_height, resize_width, 3), dtype=np.uint8)
+        cv2.putText(blank_frame, "OFFLINE", (50, resize_height // 2), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+        _, buffer = cv2.imencode('.jpg', blank_frame)
+        frame = buffer.tobytes()
+        while True:
+            time.sleep(1)
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\r\n')
 
     while True:
         ret, frame = cap.read()
@@ -188,22 +205,98 @@ def generate_frames():
 
         objects = ct.update(rects)
 
+        with data_lock:
+            frame_directions = {}
+
+            for object_id, centroid in objects.items():
+                cx, cy = centroid
+                prev_cy = object_prev_positions.get(object_id)
+                direction = detect_direction(object_id, cy, prev_cy)
+                object_prev_positions[object_id] = cy
+                frame_directions[object_id] = direction
+
+            # # Local copies of counts for drawing and logging (READ)
+            # current_entry_count = entry_count
+            # current_exit_count = exit_count
+
+            # Local copies of counts for drawing and logging (READ)
+            current_entry_count = entry_count
+            current_exit_count = exit_count
+            current_dalam_count = current_entry_count - current_exit_count
+
+            # --- LOGGING (WRITE Shared State) ---
+            current_time = datetime.now()
+            if (current_time - last_log_time).total_seconds() >= log_interval_seconds:
+                log_data.append({
+                    "time": current_time.strftime("%H:%M:%S"),
+                    "entry": current_entry_count,
+                    "exit": current_exit_count,
+                    "current": current_dalam_count
+                })
+                # Update time while inside the lock
+                last_log_time = current_time
+        
+        # Log release
+
+
+        current_dalam_count = current_entry_count - current_exit_count
+        
+        # draw bounding boxes
+        rect_index = 0
         for object_id, centroid in objects.items():
-            cx, cy = centroid
-            prev_cy = object_prev_positions.get(object_id)
-            direction = detect_direction(object_id, cy, prev_cy)
-            object_prev_positions[object_id] = cy
+            if rect_index < len(rects): # Safety check
+                x1, y1, x2, y2 = rects[rect_index]
+                direction = frame_directions.get(object_id, "Unknown")
+                
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                cv2.putText(frame, f"{object_id}:{direction}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+                rect_index += 1
 
-            # Draw bounding box and direction label on the frame
-            for (x1, y1, x2, y2) in rects:
-                if (x1 + x2) // 2 == cx and (y1 + y2) // 2 == cy:
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
-                    cv2.putText(frame, direction, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+        # Draw line
+        cv2.line(frame, (0, entry_line_position), (frame.shape[1], entry_line_position), (0, 100, 0), 2)
+        cv2.line(frame, (0, exit_line_position), (frame.shape[1], exit_line_position), (0, 0, 255), 2)
 
-        dalam_count = entry_count - exit_count
+        cv2.putText(frame, f"IN: {current_entry_count}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+        cv2.putText(frame, f"OUT: {current_exit_count}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+        cv2.putText(frame, f"CURRENT: {current_dalam_count}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 3)
 
-        cv2.line(frame, (0, entry_line_position), (frame.shape[1], entry_line_position), (0, 100, 0), 2)  # Entry line (green)
-        cv2.line(frame, (0, exit_line_position), (frame.shape[1], exit_line_position), (0, 0, 255), 2)    # Exit line (red)
+            # # Draw bounding box and direction label on the frame
+            # for (x1, y1, x2, y2) in rects:
+            #     if (x1 + x2) // 2 == cx and (y1 + y2) // 2 == cy:
+            #         cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
+            #         cv2.putText(frame, direction, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+
+        # # dalam_count = entry_count - exit_count
+ 
+
+        # for object_id, centroid in objects.items():
+        #     cx, cy = centroid
+        #     # Note: Redetermining direction here is safe for display label purposes 
+        #     # as it only reads state (or uses the direction value obtained inside the lock).
+        #     direction = detect_direction(object_id, cy, object_prev_positions.get(object_id)) 
+            
+        #     # Draw bounding box and direction label on the frame
+        #     for (x1, y1, x2, y2) in rects:
+        #         if (x1 + x2) // 2 == cx and (y1 + y2) // 2 == cy:
+        #             cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
+        #             cv2.putText(frame, direction, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+        #             break
+
+        # cv2.line(frame, (0, entry_line_position), (frame.shape[1], entry_line_position), (0, 100, 0), 2)  # Entry line (green)
+        # cv2.line(frame, (0, exit_line_position), (frame.shape[1], exit_line_position), (0, 0, 255), 2)    # Exit line (red)
+
+        # LOGGING (WRITE Shared State)
+        current_time = datetime.now()
+        if (current_time - last_log_time).total_seconds() >= log_interval_seconds:
+            with data_lock:
+                log_data.append({
+                    "time": current_time.strftime("%H:%M:%S"),
+                    "entry": current_entry_count,
+                    "exit": current_exit_count,
+                    "current": current_dalam_count
+                })
+            last_log_time = current_time
+
 
         _, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
@@ -226,22 +319,27 @@ graph_data = {
     "count_data": []
 }
 
-log_data = []
+
 
 # Menghitung data
 @app.route('/count_data')
 def count_data():
-    global entry_count, exit_count, log_data
-    current_count = entry_count - exit_count
+    global entry_count, exit_count
+
+    with data_lock:
+        entry = entry_count
+        exit = exit_count
+
+    current_count = entry - exit
 
     timestamp = datetime.now().strftime("%H:%M:%S")
 
-    log_data.append({
-        "time": timestamp,
-        "entry": entry_count,
-        "exit": exit_count,
-        "current": current_count
-    })
+    # log_data.append({
+    #     "time": timestamp,
+    #     "entry": entry_count,
+    #     "exit": exit_count,
+    #     "current": current_count
+    # })
 
     data = {
         "entry_count": entry_count,
@@ -252,10 +350,24 @@ def count_data():
 
 @app.route('/reset_count', methods=['POST'])
 def reset_count():
-    global entry_count, exit_count, current_count
-    entry_count = 0
-    exit_count = 0
-    current_count = 0
+    # global entry_count, exit_count, current_count
+    global entry_count, exit_count, ct, object_prev_positions, counted_on_entry, counted_on_exit
+
+    with data_lock:
+        # Reset Counters
+        entry_count = 0
+        exit_count = 0
+        
+        # Reset Tracker State
+        global ct
+        ct = CentroidTracker()
+        object_prev_positions = {}
+        counted_on_entry = set()
+        counted_on_exit = set()
+
+    # entry_count = 0
+    # exit_count = 0
+    # current_count = 0
     return jsonify({"message": "Count reset successful"})
 
 
@@ -264,6 +376,9 @@ def download_excel():
     # Buat workbook Excel
     global log_data
 
+    with data_lock:
+        local_log_data = list(log_data)
+
     wb = Workbook()
     ws = wb.active
     ws.title = "Crowd Data"
@@ -271,7 +386,7 @@ def download_excel():
     # Tambahkan Header ke worksheet
     ws.append(["Time", "Current Count", "Entry Count", "Exit Count"])
     
-    for item in log_data:
+    for item in local_log_data:
         ws.append([
             item["time"], 
             item["current"], 
@@ -289,7 +404,7 @@ def download_excel():
         excel_buffer,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         as_attachment=True,
-        download_name="Crowd_Data.xlsx"
+        download_name=f"Crowd_Data_MovCount_Horizontal_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx" 
     )
 
 @app.route('/shutdown', methods=['POST'])

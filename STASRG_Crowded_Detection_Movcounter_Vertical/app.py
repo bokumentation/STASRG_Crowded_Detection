@@ -16,7 +16,7 @@ from openpyxl.drawing.image import Image
 from io import BytesIO
 import matplotlib.pyplot as plt
 from datetime import datetime
-from threading import Thread
+from threading import Thread, Lock
 import threading
 
 print("######################################")
@@ -26,6 +26,8 @@ print("Versi: Vertical Line |  FINAL")
 print("Tunggu...")
 
 app = Flask(__name__, static_folder='static')
+
+data_lock = Lock()
 
 # Inisialisasi YOLOv8 model
 print("YOLOv8: Loading Computer Vision Model")
@@ -132,24 +134,25 @@ counted_on_exit = set()
 
 def detect_direction(object_id, cx, prev_cx):
     global entry_count, exit_count
-    if prev_cx is not None:
-        if prev_cx < cx:
-            if prev_cx < exit_line_position <= cx:  # bergerak melewati exit line (ke kanan)
-                if object_id not in counted_on_exit:
-                    exit_count += 1
-                    counted_on_exit.add(object_id)
-                    counted_on_entry.discard(object_id)
-                return "Exit"
-        elif prev_cx > cx:
-            if prev_cx > entry_line_position >= cx:  # bergerak melewati entry line (ke kiri)
-                if object_id not in counted_on_entry:
-                    entry_count += 1
-                    counted_on_entry.add(object_id)
-                    counted_on_exit.discard(object_id)
-                return "Entry"
-    else:
-        if object_id in counted_on_entry or object_id in counted_on_exit:
-            return "Idle"
+    with data_lock:
+        if prev_cx is not None:
+            if prev_cx < cx:
+                if prev_cx < exit_line_position <= cx:  # bergerak melewati exit line (ke kanan)
+                    if object_id not in counted_on_exit:
+                        exit_count += 1
+                        counted_on_exit.add(object_id)
+                        counted_on_entry.discard(object_id)
+                    return "Exit"
+            elif prev_cx > cx:
+                if prev_cx > entry_line_position >= cx:  # bergerak melewati entry line (ke kiri)
+                    if object_id not in counted_on_entry:
+                        entry_count += 1
+                        counted_on_entry.add(object_id)
+                        counted_on_exit.discard(object_id)
+                    return "Entry"
+        else:
+            if object_id in counted_on_entry or object_id in counted_on_exit:
+                return "Idle"
     return "Orang"
 
 def generate_frames():
@@ -183,7 +186,8 @@ def generate_frames():
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
                     cv2.putText(frame, direction, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
 
-        dalam_count = entry_count - exit_count
+        with data_lock:
+            dalam_count = entry_count - exit_count
 
         cv2.line(frame, (entry_line_position, 0), (entry_line_position, frame.shape[0]), (0, 100, 0), 2)  # Entry line (green)
         cv2.line(frame, (exit_line_position, 0), (exit_line_position, frame.shape[0]), (0, 0, 255), 2)    # Exit line (red)
@@ -206,37 +210,51 @@ def video_feed():
 
 graph_data = {
     "time_labels": [],
-    "count_data": []
+    "count_data": [],
+    "timestamps": [],
+    "data_points": []
 }
 
 # Menghitung data
 @app.route('/count_data')
 def count_data():
-    global entry_count, exit_count, graph_data
     current_count = entry_count - exit_count
+    with data_lock:
+        entry_count, exit_count, graph_data
 
-    # Tambahkan data waktu dan jumlah
-    graph_data["time_labels"].append(datetime.now().strftime("%H:%M:%S"))
-    graph_data["count_data"].append(current_count)
+        # Tambahkan data waktu dan jumlah
+        graph_data["timestamps"].append(datetime.now().strftime("%H:%M:%S"))
+        graph_data["data_points"].append({
+            "current": current_count,
+            "entry": entry_count,
+            "exit": exit_count
+        })
 
-    data = {
-        "entry_count": entry_count,
-        "exit_count": exit_count,
-        "current_count": current_count
-    }
+        data = {
+            "entry_count": entry_count,
+            "exit_count": exit_count,
+            "current_count": current_count
+        }
     return jsonify(data)
 
 @app.route('/reset_count', methods=['POST'])
 def reset_count():
     global entry_count, exit_count, current_count
-    entry_count = 0
-    exit_count = 0
-    current_count = 0
+
+    with data_lock:
+        entry_count = 0
+        exit_count = 0
+        current_count = 0
     return jsonify({"message": "Count reset successful"})
 
 
 @app.route('/download_excel', methods=['GET'])
 def download_excel():
+    # Acquire the lock to read the complete and consistent historical data
+    with data_lock:
+        timestamps = list(graph_data["timestamps"])
+        data_points = list(graph_data["data_points"])
+
     # Buat workbook Excel
     wb = Workbook()
     ws = wb.active
@@ -245,8 +263,24 @@ def download_excel():
     # Tambahkan data ke worksheet
     ws.append(["Time", "Current Count", "Entry Count", "Exit Count"])
     
-    for time, count in zip(graph_data["time_labels"], graph_data["count_data"]):
-        ws.append([time, count, entry_count, exit_count])
+    # for time, count in zip(graph_data["time_labels"], graph_data["count_data"]):
+    #     ws.append([time, count, entry_count, exit_count])
+    
+    # for time, data_point in zip(graph_data["timestamps"], graph_data["data_points"]):
+    #     ws.append([
+    #         time, 
+    #         data_point["current"], 
+    #         data_point["entry"], 
+    #         data_point["exit"]
+    # ])
+        
+    for time, data_point in zip(timestamps, data_points):
+        ws.append([
+            time, 
+            data_point["current"], 
+            data_point["entry"], 
+            data_point["exit"]
+        ])
 
     # Simpan workbook ke buffer
     excel_buffer = BytesIO()
@@ -258,7 +292,7 @@ def download_excel():
         excel_buffer,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         as_attachment=True,
-        download_name="Crowd_Data.xlsx"
+        download_name=f"Crowd_Data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     )
 
 @app.route('/shutdown', methods=['POST'])
