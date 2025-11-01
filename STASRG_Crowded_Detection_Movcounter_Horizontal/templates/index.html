@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Crowded Detection System">
+    <meta name="keywords" content="crowd, detection, monitoring">
+    <title>Crowded Detection</title>
+    <link rel="icon" href="static/G_STAS.png" type="image/png">
+    <script src="{{ url_for('static', filename='chart.js') }}" defer></script>
+    <link href="{{ url_for('static', filename='css/tailwind.min.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</head>
+
+<body class="bg-green-100 flex flex-col min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-md mb-4">
+        <div class="container mx-auto flex justify-between items-center p-4">
+            <!-- Logo -->
+            <div class="flex items-center">
+                <img id="logo" src="{{ url_for('static', filename='stas.png') }}" alt="Crowded Detection Logo"
+                    class="h-10 mr-3">
+            </div>
+            <!-- NavBar -->
+            <nav>
+                <div class="ml-10 flex items-baseline space-x-4">
+                    <button onclick="downloadDataAjax()"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-blue-300 hover:bg-blue-700 hover:text-white">
+                        Download Data
+                    </button>
+                    <button onclick="resetCount()"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-red-300 hover:bg-red-700 hover:text-white">
+                        Reset Hitungan
+                    </button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Status -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-4">
+        <h3 class="text-xl font-semibold text-center" id="status">Status: Normal</h3>
+    </div>
+
+    <div class="flex flex-col md:flex-row gap-4 mb-4">
+        <!-- Live Video -->
+        <div class="bg-white shadow-md rounded-lg p-6 md:w-1/2">
+            <h3 class="text-xl font-semibold text-center mb-4 text-gray-600">Live Video</h3>
+            <img src="{{ url_for('video_feed') }}" alt="Live Video Feed" class="w-full max-w-xl mx-auto rounded-lg">
+        </div>
+
+        <style>
+            .text-10xl {
+                font-size: 20rem;
+            }
+        </style>
+        
+        <div class="bg-white shadow-md rounded-lg p-6 md:w-1/2 text-center">
+            <h3 class="text-xl text-gray-600 font-semibold">Pengunjung Saat Ini</h3>
+            <p class="text-10xl font-bold text-blue-600" id="current-count">0</p>
+        </div>
+    </div>
+
+    <!-- Count -->
+    <footer class="bg-white p-4">
+        <div class="flex flex-col md:flex-row gap-4 mb-4">
+            <div class="text-center md:w-1/2">
+                <h3 class="text-xl text-gray-600 font-semibold">Masuk</h3>
+                <p class="text-5xl font-bold text-green-600" id="entry-count">0</p>
+            </div>
+            <div class="text-center md:w-1/2">
+                <h3 class="text-xl text-gray-600 font-semibold">Keluar</h3>
+                <p class="text-5xl font-bold text-red-600" id="exit-count">0</p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+<script>
+    // --- Shutdown Trigger ---
+    function sendShutdownSignal() {
+        navigator.sendBeacon('/shutdown', new URLSearchParams());
+    }
+
+    window.addEventListener('beforeunload', sendShutdownSignal);
+</script>
+
+</html>

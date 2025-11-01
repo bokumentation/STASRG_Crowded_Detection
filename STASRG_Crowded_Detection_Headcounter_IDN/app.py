@@ -15,10 +15,15 @@ import subprocess
 import os
 
 # Inisialisasi Flask
+print("######################################")
+print("# Memulai Aplikasi Crowded Detection #")
+print("######################################")
+
+print("Tunggu...")
 app = Flask(__name__)
 
 # Inisialisasi YOLOv8 model
-print("Status: Loading Computer Vision Model... Mungkin butuh waktu.")
+print("YOLOv8: Loading Computer Vision Model... Tunggu...")
 try:
     model = YOLO('survei2.pt') 
 except Exception as e:
@@ -26,8 +31,8 @@ except Exception as e:
     model = None
 print("Status: Model loaded successfully.")
 
-# Inisialisasi YOLOv8 model
-print("Status: Inisialisasi Webcam...")
+# Inisialisasi VideoCapture
+print("OpenCV: Inisialisasi Webcam...")
 try:
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -194,8 +199,8 @@ def generate_frame():
                 rects.append((int(x1), int(y1), int(x2), int(y2)))
                 cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (255, 0, 0), 2)
 
-            text = f"{conf:.2f}"
-            cv2.putText(frame, text, (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            # text = f"{conf:.2f}"
+            # cv2.putText(frame, text, (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
             # 3. Update tracker
             objects = dt.update(rects)
