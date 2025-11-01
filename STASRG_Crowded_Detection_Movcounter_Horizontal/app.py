@@ -1,5 +1,4 @@
 # MOV COUNTER HORIZONTAL. 
-# Exit Line Bawah
 
 import webbrowser
 import subprocess
@@ -21,8 +20,9 @@ import threading
 print("######################################")
 print("# Memulai Aplikasi Crowded Detection #")
 print("######################################")
-
+print("Versi: Horizontal Line | Final")
 print("Tunggu...")
+
 app = Flask(__name__, static_folder='static')
 
 # Inisialisasi YOLOv8 model
@@ -35,7 +35,7 @@ except Exception as e:
 print("Status: Model loaded successfully.")
 
 # Inisialisasi VideoCapture
-print("OpenCV: Inisialisasi Webcam...")
+print("OpenCV: Inisialisasi OpenCV dan Kamera...")
 try:
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -46,14 +46,9 @@ except IOError as e:
 print("Status: Inisialisasi berhasil. Memulai Flask server...")
 
 # KODINGAN ADIB
-# Horizontal
+# Horizontal Line
 entry_line_position = 320
 exit_line_position = 160
-
-# Vertical
-# entry_line_position = 440
-# exit_line_position = 200
-
 entry_count = 0 # Dimulai dari 0
 exit_count = 0 # Dimulai dari 0
 resize_width = 640   # Ubah sesuai kebutuhan
@@ -135,28 +130,45 @@ counted_on_exit = set()
 
 # cy for the horizontal
 def detect_direction(object_id, cy, prev_cy):
-    global entry_count, exit_count
+    global entry_count, exit_count, counted_on_entry, counted_on_exit
     if prev_cy is not None:
-        if prev_cy < exit_line_position <= cy:  # Bergerak melewati exit line (ke bawah)
-            if object_id not in counted_on_exit:  # Hanya hitung jika belum dihitung sebelumnya
-                exit_count += 1
-                counted_on_exit.add(object_id)  # Tandai objek sebagai dihitung di exit
-                if object_id in counted_on_entry:  # Hapus dari entry jika berpindah garis
-                    counted_on_entry.remove(object_id)
+        if prev_cy < cy:
+            if prev_cy < entry_line_position <= cy:  # Bergerak melewati exit line (ke bawah)
+                if object_id not in counted_on_exit:  # Hanya hitung jika belum dihitung sebelumnya
+                    exit_count += 1
+                    counted_on_exit.add(object_id)  # Tandai objek sebagai dihitung di exit
+                    if object_id in counted_on_entry:  # Hapus dari entry jika berpindah garis
+                        counted_on_entry.remove(object_id)
             return "Exit"
-        elif prev_cy > entry_line_position >= cy:  # Bergerak melewati entry line (ke atas)
-            if object_id not in counted_on_entry:  # Hanya hitung jika belum dihitung sebelumnya
-                entry_count += 1
-                counted_on_entry.add(object_id)  # Tandai objek sebagai dihitung di entry
-                if object_id in counted_on_exit:  # Hapus dari exit jika berpindah garis
-                    counted_on_exit.remove(object_id)
+        elif prev_cy > cy:
+            if prev_cy > exit_line_position >= cy:  # Bergerak melewati entry line (ke atas)
+                if object_id not in counted_on_entry:  # Hanya hitung jika belum dihitung sebelumnya
+                    entry_count += 1
+                    counted_on_entry.add(object_id)  # Tandai objek sebagai dihitung di entry
+                    if object_id in counted_on_exit:  # Hapus dari exit jika berpindah garis
+                        counted_on_exit.remove(object_id)
             return "Entry"
-    else:
-        # Jika objek tidak bergerak, jangan hitung
-        if object_id in counted_on_entry or object_id in counted_on_exit:
-            return "Idle"
-    return "Orang"
+        
+    if prev_cy is not None and abs(cy - entry_line_position) > 100 and object_id in counted_on_entry:
+        counted_on_entry.discard(object_id)
+    if prev_cy is not None and abs(cy - exit_line_position) > 100 and object_id in counted_on_exit:
+        counted_on_exit.discard(object_id)
 
+    # Check if object is far below the lower line (Entry=320)
+    if cy > (entry_line_position + 50) and object_id in counted_on_exit:
+        counted_on_exit.discard(object_id)
+        
+    # Check if object is far above the upper line (Exit=160)
+    if cy < (exit_line_position - 50) and object_id in counted_on_entry:
+        counted_on_entry.discard(object_id)
+
+    # 3. Tracking Status Reporting
+    if object_id in counted_on_entry or object_id in counted_on_exit:
+        return "Counted"
+    
+    return "Idle"
+
+# Horizontal
 def generate_frames():
     global entry_count, exit_count
 
@@ -199,7 +211,6 @@ def generate_frames():
         yield (b'--frame\r\n'
             b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-
 # Root folder
 @app.route('/')
 def index():
@@ -215,15 +226,22 @@ graph_data = {
     "count_data": []
 }
 
+log_data = []
+
 # Menghitung data
 @app.route('/count_data')
 def count_data():
-    global entry_count, exit_count, graph_data
+    global entry_count, exit_count, log_data
     current_count = entry_count - exit_count
 
-    # Tambahkan data waktu dan jumlah
-    graph_data["time_labels"].append(datetime.now().strftime("%H:%M:%S"))
-    graph_data["count_data"].append(current_count)
+    timestamp = datetime.now().strftime("%H:%M:%S")
+
+    log_data.append({
+        "time": timestamp,
+        "entry": entry_count,
+        "exit": exit_count,
+        "current": current_count
+    })
 
     data = {
         "entry_count": entry_count,
@@ -244,33 +262,22 @@ def reset_count():
 @app.route('/download_excel', methods=['GET'])
 def download_excel():
     # Buat workbook Excel
+    global log_data
+
     wb = Workbook()
     ws = wb.active
     ws.title = "Crowd Data"
 
-    # Tambahkan data ke worksheet
+    # Tambahkan Header ke worksheet
     ws.append(["Time", "Current Count", "Entry Count", "Exit Count"])
-    for time, count in zip(graph_data["time_labels"], graph_data["count_data"]):
-        ws.append([time, count, entry_count, exit_count])
-
-    # Buat grafik menggunakan matplotlib
-    plt.figure(figsize=(10, 6))
-    plt.plot(graph_data["time_labels"], graph_data["count_data"], marker='o', linestyle='-', color='blue')
-    plt.title("Visitor Count Over Time")
-    plt.xlabel("Time")
-    plt.ylabel("Count")
-    plt.xticks(rotation=45, fontsize=8)
-    plt.tight_layout()
-
-    # Simpan grafik ke gambar
-    img_buffer = BytesIO()
-    plt.savefig(img_buffer, format='png')
-    plt.close()
-    img_buffer.seek(0)
-
-    # Masukkan gambar grafik ke worksheet
-    img = Image(img_buffer)
-    ws.add_image(img, 'E2')  # Letakkan grafik di sel E2
+    
+    for item in log_data:
+        ws.append([
+            item["time"], 
+            item["current"], 
+            item["entry"], 
+            item["exit"]
+        ])
 
     # Simpan workbook ke buffer
     excel_buffer = BytesIO()

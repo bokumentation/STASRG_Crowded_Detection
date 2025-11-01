@@ -22,7 +22,7 @@ import threading
 print("######################################")
 print("# Memulai Aplikasi Crowded Detection #")
 print("######################################")
-print("Versi: Vertical Line")
+print("Versi: Vertical Line |  FINAL")
 print("Tunggu...")
 
 app = Flask(__name__, static_folder='static')
@@ -37,7 +37,7 @@ except Exception as e:
 print("Status: Model loaded successfully.")
 
 # Inisialisasi VideoCapture
-print("OpenCV: Inisialisasi Webcam...")
+print("OpenCV: Inisialisasi OpenCV dan Kamera...")
 try:
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -48,10 +48,11 @@ except IOError as e:
 print("Status: Inisialisasi berhasil. Memulai Flask server...")
 
 # KODINGAN ADIB
+# Vertical Line
 entry_line_position = 440
 exit_line_position = 200
-entry_count = 150 # Dimulai dari 0
-exit_count = 100 # Dimulai dari 0
+entry_count = 0 # Dimulai dari 0
+exit_count = 0 # Dimulai dari 0
 resize_width = 640   # Ubah sesuai kebutuhan
 resize_height = 480  # Ubah sesuai kebutuhan
 
@@ -132,18 +133,20 @@ counted_on_exit = set()
 def detect_direction(object_id, cx, prev_cx):
     global entry_count, exit_count
     if prev_cx is not None:
-        if prev_cx < exit_line_position <= cx:  # bergerak melewati exit line (ke kanan)
-            if object_id not in counted_on_exit:
-                exit_count += 1
-                counted_on_exit.add(object_id)
-                counted_on_entry.discard(object_id)
-            return "Exit"
-        elif prev_cx > entry_line_position >= cx:  # bergerak melewati entry line (ke kiri)
-            if object_id not in counted_on_entry:
-                entry_count += 1
-                counted_on_entry.add(object_id)
-                counted_on_exit.discard(object_id)
-            return "Entry"
+        if prev_cx < cx:
+            if prev_cx < exit_line_position <= cx:  # bergerak melewati exit line (ke kanan)
+                if object_id not in counted_on_exit:
+                    exit_count += 1
+                    counted_on_exit.add(object_id)
+                    counted_on_entry.discard(object_id)
+                return "Exit"
+        elif prev_cx > cx:
+            if prev_cx > entry_line_position >= cx:  # bergerak melewati entry line (ke kiri)
+                if object_id not in counted_on_entry:
+                    entry_count += 1
+                    counted_on_entry.add(object_id)
+                    counted_on_exit.discard(object_id)
+                return "Entry"
     else:
         if object_id in counted_on_entry or object_id in counted_on_exit:
             return "Idle"
@@ -241,27 +244,9 @@ def download_excel():
 
     # Tambahkan data ke worksheet
     ws.append(["Time", "Current Count", "Entry Count", "Exit Count"])
+    
     for time, count in zip(graph_data["time_labels"], graph_data["count_data"]):
         ws.append([time, count, entry_count, exit_count])
-
-    # Buat grafik menggunakan matplotlib
-    plt.figure(figsize=(10, 6))
-    plt.plot(graph_data["time_labels"], graph_data["count_data"], marker='o', linestyle='-', color='blue')
-    plt.title("Visitor Count Over Time")
-    plt.xlabel("Time")
-    plt.ylabel("Count")
-    plt.xticks(rotation=45, fontsize=8)
-    plt.tight_layout()
-
-    # Simpan grafik ke gambar
-    img_buffer = BytesIO()
-    plt.savefig(img_buffer, format='png')
-    plt.close()
-    img_buffer.seek(0)
-
-    # Masukkan gambar grafik ke worksheet
-    img = Image(img_buffer)
-    ws.add_image(img, 'E2')  # Letakkan grafik di sel E2
 
     # Simpan workbook ke buffer
     excel_buffer = BytesIO()

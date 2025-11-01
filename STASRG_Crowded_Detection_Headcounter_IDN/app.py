@@ -18,9 +18,12 @@ import os
 print("######################################")
 print("# Memulai Aplikasi Crowded Detection #")
 print("######################################")
-
+print("Versi: Headcounter | Final")
 print("Tunggu...")
 app = Flask(__name__)
+
+log_interval = 10
+print("Info: Log Interval", log_interval, "detik")
 
 # Inisialisasi YOLOv8 model
 print("YOLOv8: Loading Computer Vision Model... Tunggu...")
@@ -32,7 +35,7 @@ except Exception as e:
 print("Status: Model loaded successfully.")
 
 # Inisialisasi VideoCapture
-print("OpenCV: Inisialisasi Webcam...")
+print("OpenCV: Inisialisasi OpenCV dan Kamera...")
 try:
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -104,7 +107,6 @@ class CentroidTracker:
                 if D[row, col] > self.distanceThreshold:
                     continue
 
-            
                 objectID = objectIDs[row]
                 self.objects[objectID] = inputCentroids[col]
                 self.disappeared[objectID] = 0
@@ -130,11 +132,11 @@ class CentroidTracker:
 dt = CentroidTracker()
 total_count = 0
 current_count = 0
-visitor_data = deque(maxlen=500) # maxlen untuk memory safety. perlu dicrosscek
+visitor_data = deque() # there is no maxlen untuk memory safety. perlu dicrosscek
 reset_flag = False
 last_saved_time = datetime.now()
 
-# NEW: Variables for Stabilization Delay
+# Variables for Stabilization Delay
 CV_START_TIME = datetime.now()
 STABILIZATION_DELAY_SECONDS = 8 # Time (in seconds) to wait before tracking starts
 
@@ -218,7 +220,7 @@ def generate_frame():
             
             # 6. Simpan data waktu dan jumlah pengunjung
             timestamp = datetime.now()
-            if (timestamp - last_saved_time).total_seconds()>=30:
+            if (timestamp - last_saved_time).total_seconds()>=log_interval:
                 # visitor_data.append({"time": timestamp.strftime('%H:%M:%S'),"count": current_count, "total count": total_count})
                 visitor_data.append({"waktu": timestamp.strftime('%H:%M:%S'),"pengunjung": current_count, "total semua pengunjung": total_count})
                 last_saved_time = timestamp
@@ -352,10 +354,6 @@ def open_browser():
         # Fallback to standard webbrowser if no App Mode browser could be found
         print("No App Mode browser found. Falling back to default browser tab.")
         webbrowser.open_new_tab(app_url)
-
-# def open_browser_simple():
-#     # Wait a moment for the server to start before launching the browser
-#     webbrowser.open_new_tab('http://127.0.0.1:5000/')
 
 # Jalankan aplikasi Flask
 if __name__ == "__main__":

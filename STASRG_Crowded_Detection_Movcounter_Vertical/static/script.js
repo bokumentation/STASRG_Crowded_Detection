@@ -101,6 +101,6 @@ function gantiGambar() {
 
 window.addEventListener("load", () => {
     fetchCountData();
-    setInterval(fetchCountData, 1000); // Perbarui data setiap 1 detik
+    setInterval(fetchCountData, 2000); // ori: Perbarui data setiap 1 detik
     setInterval(gantiGambar, 3000); // Mengganti gambar setiap 3 detik
 });
