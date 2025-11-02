@@ -13,6 +13,8 @@ from threading import Thread, Lock
 import time
 import subprocess
 import os
+import sys
+from path_resolver import get_resource_path
 
 # Inisialisasi Flask
 print("######################################")
@@ -25,14 +27,38 @@ app = Flask(__name__)
 log_interval = 10
 print("Info: Log Interval", log_interval, "detik")
 
+
 # Inisialisasi YOLOv8 model
+# print("YOLOv8: Loading Computer Vision Model... Tunggu...")
+# try:
+#     model = YOLO('survei2.pt')
+# except Exception as e:
+#     print(f"Error loading Yolo model: {e}")
+#     model = None
+# print("Status: Model loaded successfully.")
+
+
+# --- NEW ---
 print("YOLOv8: Loading Computer Vision Model... Tunggu...")
-try:
-    model = YOLO('survei2.pt') 
-except Exception as e:
-    print(f"Error loading Yolo model: {e}")
+
+# 1. Resolve the model path dynamically
+# get_resource_path handles the PyInstaller path resolution.
+MODEL_FILENAME = 'survei2.pt'
+model_path = get_resource_path(MODEL_FILENAME) 
+
+if model_path:
+    try:
+        # 2. Use the resolved path to load the model
+        model = YOLO(model_path) 
+        print("Status: Model loaded successfully.")
+    except Exception as e:
+        print(f"Error loading Yolo model from '{model_path}': {e}")
+        model = None
+else:
+    print("Status: Model file path could not be resolved. Model not loaded.")
     model = None
-print("Status: Model loaded successfully.")
+# --- END ---
+
 
 # Inisialisasi VideoCapture
 print("OpenCV: Inisialisasi OpenCV dan Kamera...")
