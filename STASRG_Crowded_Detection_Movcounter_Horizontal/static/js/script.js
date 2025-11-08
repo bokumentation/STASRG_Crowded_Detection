@@ -39,13 +39,11 @@ async function fetchCountData() {
     }
 }
 
-// 💡 NEW FUNCTION: Handles the download asynchronously without navigating the page
 async function downloadDataAjax() {
     try {
         const response = await fetch("/download_excel");
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
-        // Get the filename from the response headers (optional, but good practice)
         const contentDisposition = response.headers.get('Content-Disposition');
         let filename = 'Crowd_Data.xlsx';
         if (contentDisposition) {
@@ -83,7 +81,6 @@ async function resetCount() {
         const response = await fetch("/reset_count", { method: "POST" });
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
-        // Set ulang nilai di UI
         document.getElementById("entry-count").textContent = 0;
         document.getElementById("exit-count").textContent = 0;
         document.getElementById("current-count").textContent = 0;
@@ -93,7 +90,6 @@ async function resetCount() {
     }
 }
 
-// Fungsi untuk mengganti gambar
 function gantiGambar() {
     index_gambar = (index_gambar + 1) % gambarArray.length; // Menghitung indeks gambar berikutnya
     document.getElementById('logo').src = gambarArray[index_gambar]; // Mengganti src gambar
@@ -101,6 +97,6 @@ function gantiGambar() {
 
 window.addEventListener("load", () => {
     fetchCountData();
-    setInterval(fetchCountData, 2000); // ori: Perbarui data setiap 1 detik
+    setInterval(fetchCountData, 1000); // ori: Perbarui data setiap 1 detik
     setInterval(gantiGambar, 3000); // Mengganti gambar setiap 3 detik
 });

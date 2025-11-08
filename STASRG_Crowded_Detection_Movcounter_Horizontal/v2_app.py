@@ -64,6 +64,12 @@ counted_on_exit = set()
 log_interval_seconds = 5  # Log data every 5 seconds
 
 
+## Test
+TRIPWIRE_POSITION = (320 + 160) // 2 # Midpoint: 240
+LINE_EXIT_ZONE = 320 # The lower line position
+LINE_ENTRY_ZONE = 160 # The upper line position
+
+
 # Centroid tracker class to assign unique IDs to objects and track them
 class CentroidTracker:
     def __init__(self, max_disappeared=50):
