@@ -1,0 +1,30 @@
+{
+    "version": "horizontal",
+    "model_path": "head.pt",
+    "video_source": 0,
+    "resize": {
+        "width": 640,
+        "height": 480
+    },
+    "tracking": {
+        "max_disappeared": 100
+    },
+    "vertical_lines": {
+        "entry_line_position": 330,
+        "exit_line_position": 310
+    },
+    "horizontal_lines": {
+        "entry_line_position": 250,
+        "exit_line_position": 230
+    },
+    "capacity": {
+        "max_crowd_count": 100
+    },
+    "initial_counts": {
+        "entry": 100,
+        "exit": 51
+    },
+    "recording": {
+        "output_directory": "CrowdedDetection_Videos"
+    }
+}

@@ -17,9 +17,11 @@ import sys
 from path_resolver import get_resource_path
 
 # Inisialisasi Flask
-print("######################################")
-print("# Memulai Aplikasi Crowded Detection #")
-print("######################################")
+print(" ")
+print(" ")
+print("--- Memulai Aplikasi Crowded Detection ---")
+print(" ")
+print(" ")
 print("Versi: Headcounter | Final")
 print("Tunggu...")
 app = Flask(__name__)
@@ -253,7 +255,7 @@ def generate_frame():
             with data_lock:
                 if (timestamp - last_saved_time).total_seconds()>=log_interval:
                     # visitor_data.append({"time": timestamp.strftime('%H:%M:%S'),"count": current_count, "total count": total_count})
-                    visitor_data.append({"waktu": timestamp.strftime('%H:%M:%S'),"pengunjung": current_count, "total semua pengunjung": total_count})
+                    visitor_data.append({"waktu": timestamp.strftime('%H:%M:%S'),"pengunjung": current_count})
                     last_saved_time = timestamp
 
         # 7. Konversi frame ke format JPEG
@@ -271,7 +273,7 @@ def generate_frame():
 # Route untuk halaman utama
 @app.route('/')
 def index():
-    return render_template('hasilcount.html')
+    return render_template('index.html')
 
 # Route untuk video feed
 @app.route('/video_feed')
@@ -405,4 +407,4 @@ if __name__ == "__main__":
     # Launch browser in a separate thread to avoid blocking the Flask startup
     Thread(target=open_browser).start()
     
-    app.run(debug=False, use_reloader=False)
+    app.run(debug=True, use_reloader=False)

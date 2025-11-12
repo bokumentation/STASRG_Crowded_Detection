@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petunjuk Penggunaan - Deteksi Kerumunan</title>
+    <link href="{{ url_for('static', filename='css/tailwind.min.css') }}" rel="stylesheet">
+    <link rel="icon" href="static/G_STAS.png" type="image/png">
+    <link href="{{ url_for('static', filename='css/tailwind.min.css') }}" rel="stylesheet">
+</head>
+
+<body class="bg-gray-50 flex flex-col min-h-screen">
+    <header class="bg-white shadow-md mb-4">
+        <div class="container mx-auto flex justify-between items-center p-4">
+            <div class="flex items-center">
+                <img id="logo" src="{{ url_for('static', filename='stas.png') }}" alt="Crowded Detection Logo"
+                    class="h-10 mr-3 transition-opacity duration-300">
+            </div>
+            <nav>
+                <div class="ml-10 flex items-baseline space-x-4">
+
+                    <a href="/"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                        Kembali
+                    </a>
+
+                    <a href="/petunjuk"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                        Petunjuk
+                    </a>
+
+                    <a href="/konfigurasi"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                        Konfigurasi
+                    </a>
+
+                    <a href="/tentang"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                        Tentang
+                    </a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <div class="bg-white shadow-lg rounded-lg p-8">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Petunjuk Penggunaan Sistem</h2>
+
+        <section class="mb-8">
+            <h3 class="text-xl font-semibold text-blue-600 mb-3">1. Memilih Mode Deteksi</h3>
+            <p class="text-gray-700">Sistem ini mendukung dua mode penghitungan yang diatur melalui file
+                <code>config.json</code>:
+            </p>
+            <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
+                <li>**Mode Horizontal:** Garis diatur secara horizontal (sumbu Y). Digunakan untuk menghitung gerakan
+                    Vertikal (naik/turun).</li>
+                <li>**Mode Vertikal:** Garis diatur secara vertikal (sumbu X). Digunakan untuk menghitung gerakan
+                    Horizontal (kiri/kanan).</li>
+            </ul>
+        </section>
+
+        <section class="mb-8">
+            <h3 class="text-xl font-semibold text-blue-600 mb-3">2. Fungsionalitas Dashboard</h3>
+            <ul class="list-disc list-inside ml-4 mt-2 space-y-2">
+                <li>**Live Video:** Menampilkan hasil deteksi real-time (Bounding Box dan Garis) dengan Overlay
+                    Timestamp.</li>
+                <li>**Current's Visitor:** Menampilkan total pengunjung saat ini (Masuk - Keluar).</li>
+                <li>**Tombol Merekam:** Gunakan tombol **Mulai Merekam** untuk menyimpan video output (termasuk deteksi)
+                    ke folder <code>/recordings</code>. File akan otomatis dinamai dengan waktu dan versi
+                    (Vertical/Horizontal).</li>
+                <li>**Download Excel:** Mengunduh data historis hitungan (perubahan hitungan) ke dalam file Excel untuk
+                    audit.</li>
+                <li>**Reset Hitungan:** Mengatur ulang semua total hitungan (Masuk, Keluar, Saat Ini) ke nol.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h3 class="text-xl font-semibold text-blue-600 mb-3">3. Optimasi (Troubleshooting)</h3>
+            <p class="text-gray-700">Untuk performa terbaik, pastikan spesifikasi perangkat keras (CPU/GPU) Anda
+                memadai. Jika FPS terasa lambat, coba:</p>
+            <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
+                <li>Kurangi resolusi frame (<code>resize.width/height</code>) di <code>config.json</code>.</li>
+                <li>Tingkatkan nilai <code>max_disappeared</code> untuk membuat pelacakan lebih toleran terhadap
+                    kegagalan deteksi sesaat.</li>
+            </ul>
+        </section>
+    </div>
+</body>
+
+<script>
+    const logos = [
+        "{{url_for('static', filename='stas.png')}}",
+        "{{url_for('static', filename='econique_logo.png')}}",
+        "{{url_for('static', filename='telkom_logo.png')}}",
+    ];
+
+    let currentIndex = 0;
+
+    function changeLogo() {
+        const logoElement = document.getElementById('logo');
+        logoElement.style.opacity = 0;
+
+        setTimeout(() => {
+            currentIndex = (currentIndex + 1) % logos.length;
+            logoElement.src = logos[currentIndex];
+            logoElement.style.opacity = 1;
+        }, 500);
+    }
+
+    setInterval(changeLogo, 3000);
+</script>
+
+</html>

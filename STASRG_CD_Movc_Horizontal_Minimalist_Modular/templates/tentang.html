@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tentang Aplikasi - Deteksi Kerumunan</title>
+    <link href="{{ url_for('static', filename='css/tailwind.min.css') }}" rel="stylesheet">
+    <link rel="icon" href="static/G_STAS.png" type="image/png">
+    <link href="{{ url_for('static', filename='css/tailwind.min.css') }}" rel="stylesheet">
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+    <header class="bg-white shadow-md mb-4">
+        <div class="container mx-auto flex justify-between items-center p-4">
+            <div class="flex items-center">
+                <img id="logo" src="{{ url_for('static', filename='stas.png') }}" alt="Crowded Detection Logo"
+                    class="h-10 mr-3 transition-opacity duration-300">
+            </div>
+           <nav>
+                <div class="ml-10 flex items-baseline space-x-4">
+
+                    <a href="/"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                        Kembali
+                    </a>
+
+                    <a href="/petunjuk"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                        Petunjuk
+                    </a>
+
+                    <a href="/konfigurasi"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                        Konfigurasi
+                    </a>
+
+                    <a href="/tentang"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                        Tentang
+                    </a>
+
+                </div>
+            </nav>
+        </div>
+    </header>
+
+
+    <div class="bg-white shadow-lg rounded-lg p-8">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Tentang Sistem Deteksi Kerumunan</h2>
+
+        <section class="mb-8">
+            <h3 class="text-xl font-semibold text-blue-600 mb-3">Teknologi Utama</h3>
+            <ul class="list-disc list-inside ml-4 mt-2 space-y-2 text-gray-700">
+                <li>**Inti Visi Komputer:** Menggunakan **YOLOv8 (You Only Look Once)** terbaru untuk deteksi objek
+                    real-time dengan akurasi tinggi.</li>
+                <li>**Pelacakan:** Menggunakan algoritma **Centroid Tracker** untuk mempertahankan ID unik objek yang
+                    bergerak dan mengatasi oklusi sesaat.</li>
+                <li>**Framework Backend:** Dibangun di atas **Flask** (Python) untuk menyajikan API dan *live video
+                    streaming* (M-JPEG).</li>
+                <li>**Antarmuka:** Menggunakan **Tailwind CSS** untuk desain *responsive* dan modern.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h3 class="text-xl font-semibold text-blue-600 mb-3">Pengembang</h3>
+            <p class="text-gray-700">Aplikasi ini dikembangkan sebagai solusi untuk pemantauan kepadatan dan arah
+                pergerakan pengunjung di lingkungan tertutup.</p>
+            <p class="mt-4 text-sm text-gray-500">Versi: 2.0 (Modular CV & Recording)</p>
+        </section>
+    </div>
+</body>
+
+<script>
+    const logos = [
+        "{{url_for('static', filename='stas.png')}}",
+        "{{url_for('static', filename='econique_logo.png')}}",
+        "{{url_for('static', filename='telkom_logo.png')}}",
+    ];
+
+    let currentIndex = 0;
+
+    function changeLogo() {
+        const logoElement = document.getElementById('logo');
+        logoElement.style.opacity = 0;
+
+        setTimeout(() => {
+            currentIndex = (currentIndex + 1) % logos.length;
+            logoElement.src = logos[currentIndex];
+            logoElement.style.opacity = 1;
+        }, 500);
+    }
+
+    setInterval(changeLogo, 3000);
+</script>
+
+</html>
