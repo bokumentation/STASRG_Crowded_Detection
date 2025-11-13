@@ -7,19 +7,17 @@
     <title>Tentang Aplikasi - Deteksi Kerumunan</title>
     <link href="{{ url_for('static', filename='css/tailwind.min.css') }}" rel="stylesheet">
     <link rel="icon" href="static/G_STAS.png" type="image/png">
-    <link href="{{ url_for('static', filename='css/tailwind.min.css') }}" rel="stylesheet">
 </head>
 
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 flex flex-col min-h-screen">
     <header class="bg-white shadow-md mb-4">
         <div class="container mx-auto flex justify-between items-center p-4">
             <div class="flex items-center">
                 <img id="logo" src="{{ url_for('static', filename='stas.png') }}" alt="Crowded Detection Logo"
                     class="h-10 mr-3 transition-opacity duration-300">
             </div>
-           <nav>
+            <nav>
                 <div class="ml-10 flex items-baseline space-x-4">
-
                     <a href="/"
                         class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
                         Kembali
@@ -36,7 +34,7 @@
                     </a>
 
                     <a href="/tentang"
-                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 font-semibold">
                         Tentang
                     </a>
 
@@ -46,18 +44,88 @@
     </header>
 
 
-    <div class="container mx-auto p-4 md:p-8">
+    <div class="container mx-auto p-4 md:p-8 flex-grow">
         <div class="bg-white shadow-lg rounded-lg p-8">
-            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Petunjuk Penggunakan Aplikasi Crowded Detection</h2>
-                <h3 class="text-xl font-semibold text-blue-600 border-b pb-1">Mode & Resolusi</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div>
-                        <label for="version" class="block text-sm font-medium text-gray-700">Versi Aktif</label>
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Tentang Aplikasi Crowded Detection</h2>
+
+            <section class="mb-8">
+                <h3 class="text-xl font-semibold text-blue-600 border-b pb-1 mb-3">1. Tujuan Utama</h3>
+                <p class="text-gray-700">Aplikasi ini dirancang untuk memantau dan menghitung jumlah orang secara *real-time* di suatu area. Dengan memanfaatkan teknologi Computer Vision, aplikasi ini dapat memberikan data akurat mengenai jumlah orang yang masuk (Entry), keluar (Exit), dan jumlah total orang yang saat ini berada di dalam area (Current Count).</p>
+            </section>
+
+            <section class="mb-8">
+                <h3 class="text-xl font-semibold text-blue-600 border-b pb-1 mb-3">2. Teknologi</h3>
+                
+                <div class="space-y-4 mb-6">
+                    
+                    <div class="flex items-start">
+                        <span class="text-2xl text-green-600 mr-3">🧠</span>
+                        <div>
+                            <p class="font-medium text-gray-800">YOLOv8 (You Only Look Once)</p>
+                            <p class="text-sm text-gray-600">
+                                Model jaringan saraf konvolusional (CNN) modern yang digunakan untuk mendeteksi objek (orang) secara akurat dan berkecepatan tinggi pada setiap frame video. Model ini adalah inti dari kemampuan hitungan orang (headcounting) aplikasi.
+                            </p>
+                        </div>
                     </div>
+                    
+                    <div class="flex items-start">
+                        <span class="text-2xl text-blue-600 mr-3">🐍</span>
+                        <div>
+                            <p class="font-medium text-gray-800">Python & Flask</p>
+                            <p class="text-sm text-gray-600">
+                                Python sebagai bahasa utama dan Flask sebagai kerangka kerja web (backend). Digunakan untuk menyediakan API untuk streaming video (Motion JPEG) dan antarmuka web untuk konfigurasi/data.
+                            </p>
+                        </div>
                     </div>
+
+                    <div class="flex items-start">
+                        <span class="text-2xl text-red-600 mr-3">📸</span>
+                        <div>
+                            <p class="font-medium text-gray-800">OpenCV</p>
+                            <p class="text-sm text-gray-600">
+                                Pustaka utama yang menangani pemrosesan frame video, pengubahan ukuran, penambahan anotasi (kotak batas, garis virtual, teks penghitungan), dan manajemen kamera/video file.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start">
+                        <span class="text-2xl text-yellow-600 mr-3">🎯</span>
+                        <div>
+                            <p class="font-medium text-gray-800">Centroid Tracker</p>
+                            <p class="text-sm text-gray-600">
+                                Algoritma pelacakan kustom yang digunakan untuk menjaga identitas objek (ID) antar frame. Hal ini penting untuk memastikan penghitungan orang yang konsisten saat mereka melintasi garis virtual.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <span class="text-2xl text-indigo-600 mr-3">🎨</span>
+                        <div>
+                            <p class="font-medium text-gray-800">Tailwind CSS</p>
+                            <p class="text-sm text-gray-600">
+                                Digunakan untuk membangun antarmuka web yang responsif dan modern, memastikan tampilan yang konsisten dan menarik di berbagai perangkat.
+                            </p>
+                        </div>
+                    </div>
+
                 </div>
+            </section>
+            
+            <section class="mb-8">
+                <h3 class="text-xl font-semibold text-blue-600 border-b pb-1 mb-3">3. Fitur Utama</h3>
+                <ul class="list-disc list-inside ml-4 space-y-3 text-gray-700">
+                    <li>Dua Mode Penghitungan: **Vertikal** (untuk pergerakan Horizontal) dan **Horizontal** (untuk pergerakan Vertikal).</li>
+                    <li>Perekaman Video *On-Demand* dengan anotasi.</li>
+                    <li>Ekspor data historis ke file Excel (<code>.xlsx</code>).</li>
+                    <li>Konfigurasi dinamis garis penghitung, resolusi, dan arah hitungan.</li>
+                </ul>
+            </section>
+            
         </div>
     </div>
+    <footer class="bg-white shadow-md mt-4 p-4 text-center text-gray-500 text-sm">
+        &copy; 2025 CoE STAS-RG | Telkom University
+    </footer>
 </body>
 
 <script>
