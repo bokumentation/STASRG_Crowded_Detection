@@ -22,29 +22,17 @@ print(" ")
 print("--- Memulai Aplikasi Crowded Detection ---")
 print(" ")
 print(" ")
-print("Versi: Headcounter | Final")
+print("Versi: Headcounter")
 print("Tunggu...")
 app = Flask(__name__)
 
+NILAI_TRIGGER_KERAMAIAN = 50
 log_interval = 10
-print("Info: Log Interval", log_interval, "detik")
+confidence_threshold = 0.3
 
-
-# Inisialisasi YOLOv8 model
-# print("YOLOv8: Loading Computer Vision Model... Tunggu...")
-# try:
-#     model = YOLO('survei2.pt')
-# except Exception as e:
-#     print(f"Error loading Yolo model: {e}")
-#     model = None
-# print("Status: Model loaded successfully.")
-
-
-# --- NEW ---
+print("INFO: Log Interval", log_interval, "detik")
 print("YOLOv8: Loading Computer Vision Model... Tunggu...")
 
-# 1. Resolve the model path dynamically
-# get_resource_path handles the PyInstaller path resolution.
 MODEL_FILENAME = 'survei2.pt'
 model_path = get_resource_path(MODEL_FILENAME) 
 
@@ -59,8 +47,6 @@ if model_path:
 else:
     print("Status: Model file path could not be resolved. Model not loaded.")
     model = None
-# --- END ---
-
 
 # Inisialisasi VideoCapture
 print("OpenCV: Inisialisasi OpenCV dan Kamera...")
@@ -73,7 +59,6 @@ except IOError as e:
     cap = None
 print("Status: Inisialisasi berhasil. Memulai Flask server...")
 
-confidence_threshold = 0.3
 
 # --- CENTROID TRACKER CLASS ---
 class CentroidTracker:
@@ -167,7 +152,7 @@ last_saved_time = datetime.now()
 
 # Variables for Stabilization Delay
 CV_START_TIME = datetime.now()
-STABILIZATION_DELAY_SECONDS = 8 # Time (in seconds) to wait before tracking starts
+STABILIZATION_DELAY_SECONDS = 3 
 
 # --- VIDEO GENERATOR FUNCTION ---
 def generate_frame():
@@ -187,11 +172,9 @@ def generate_frame():
             print("Error: Gagal membaca frame dari kamera.")
             break
 
-        
         with data_lock:
             if reset_flag:
                 current_count = 0
-                # NEW: Reinitialize tracker
                 dt = CentroidTracker()
                 reset_flag = False
 
@@ -248,7 +231,7 @@ def generate_frame():
             for objectID, centroid in objects.items():
                 text = f"ID {objectID}"
                 cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-                cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
+                # cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
             
             # 6. Simpan data waktu dan jumlah pengunjung
             timestamp = datetime.now()
@@ -265,24 +248,24 @@ def generate_frame():
         # 8. Kirim frame ke browser
         yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-        
-#
-# --- FLASK ROUTE ---
-#
 
-# Route untuk halaman utama
+# -------------------
+# --- FLASK ROUTE ---
+# -------------------
+
+# FLASK: Route untuk halaman utama
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Route untuk video feed
+# FLASK: Route untuk video feed
 @app.route('/video_feed')
 def video_feed():
     if cap is None:
         return Response("Error: Kamera tidak diinisialisasi", status=503)
     return Response(generate_frame(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-# Route untuk data jumlah orang
+# FLASK: Route untuk data jumlah orang
 @app.route('/count_data')
 def count_data():
     with data_lock:
@@ -292,19 +275,16 @@ def count_data():
         }
     return jsonify(data)
 
+# FLASK: visitor data
 @app.route('/visitor_data')
 def visitor_data_route():
     with data_lock: # Read lock
-        # Create a copy of the data before releasing the lock
         data_copy = list(visitor_data)
     return jsonify(data_copy)
 
 @app.route('/download_excel')
 def download_excel():
-    # Buat data frame dari data pengunjung
-    # df = pd.DataFrame(visitor_data)
     with data_lock: # Read lock
-        # Create a copy of the data to process outside the lock
         df_data = list(visitor_data) 
 
     # Buat data frame dari data pengunjung (using the copied data)
@@ -323,16 +303,19 @@ def download_excel():
                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                     )
 
+# FLASK: 
 @app.route('/currentvisitor')
 def currentvisitor():
     return render_template('currentvisitor.html')
 
+# FLASK: 
 @app.route('/crowd_status')
 def crowd_status():
     global current_count
-    status = "Normal" if current_count <= 200 else "Padat"
+    status = "Normal" if current_count <= NILAI_TRIGGER_KERAMAIAN else "Padat"
     return jsonify({'status': status})
 
+# FLASK: reset count
 @app.route('/reset_count', methods=['POST'])
 def reset_count():
     global total_count, current_count, visitor_data, dt, reset_flag
@@ -342,12 +325,12 @@ def reset_count():
         current_count = 0
         dt.nextObjectID = 0
         reset_flag = True 
-        # visitor_data.clear()
 
     return jsonify({"message": "Count reset successfully", 
                     "current_count": current_count, 
                     "total_count": total_count})
 
+# FLASK: (not used in html file) shutdown 
 @app.route('/shutdown', methods=['POST'])
 def shutdown():
     """Shuts down the running Flask server."""
@@ -360,20 +343,65 @@ def shutdown():
     threading.Thread(target=lambda: time.sleep(1) or os._exit(0)).start()
     return jsonify({"success": True, "message": "Application is closing."})
 
+@app.route("/petunjuk")
+def petunjuk():
+    """Menyajikan halaman Petunjuk Penggunaan."""
+    return render_template("petunjuk.html")
+
+@app.route("/tentang")
+def tentang():
+    """Menyajikan halaman Tentang Aplikasi."""
+    return render_template("tentang.html")
+
+@app.route("/konfigurasi")
+def konfiguras():
+    """Menyajikan halaman konfigurasi Aplikasi."""
+    return render_template("konfigurasi.html")
+
+@app.route('/api/konfigurasi', methods=['GET', 'POST'])
+def api_konfigurasi():
+    global NILAI_TRIGGER_KERAMAIAN
+
+    if request.method == 'GET':
+        return jsonify({
+            'trigger_keramaian': NILAI_TRIGGER_KERAMAIAN,
+            'log_interval': log_interval,
+            'confidence_threshold': confidence_threshold
+        })
+
+    elif request.method == 'POST':
+        try:
+            data = request.get_json()
+            new_trigger = int(data.get('trigger_keramaian'))
+            
+            if new_trigger <= 0:
+                return jsonify({"error": "Nilai trigger harus lebih besar dari 0."}), 400
+                
+            with data_lock:
+                NILAI_TRIGGER_KERAMAIAN = new_trigger
+            
+            print(f"INFO: NILAI_TRIGGER_KERAMAIAN diubah menjadi: {NILAI_TRIGGER_KERAMAIAN}")
+            
+            return jsonify({
+                "message": f"Nilai trigger keramaian berhasil diperbarui menjadi {NILAI_TRIGGER_KERAMAIAN}",
+                "trigger_keramaian": NILAI_TRIGGER_KERAMAIAN
+            })
+        except ValueError:
+            return jsonify({"error": "Input nilai trigger tidak valid."}), 400
+        except Exception as e:
+            return jsonify({"error": f"Gagal memperbarui konfigurasi: {e}"}), 500
+
 # --- UTILITY AND RUN APP ---
 def open_browser():
     """Launches the application URL in a browser's 'App Mode' for a PWA-like 
     experience, falling back from Chrome to Edge if Chrome is not found.
     """
-    # Wait for the Flask server and the CV thread to start up
+
     time.sleep(2) 
-    
     app_url = 'http://127.0.0.1:5000/'
     
     browser_paths = [
-        # 1. Google Chrome (Standard 64-bit path)
         "C:/Program Files/Google/Chrome/Application/chrome.exe",
-        # 2. Microsoft Edge (Standard 64-bit path)
         "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
     ]
 
@@ -382,7 +410,6 @@ def open_browser():
     for browser_path in browser_paths:
         if os.path.exists(browser_path):
             try:
-                # Use subprocess to run the command with the --app flag
                 subprocess.Popen([
                     browser_path, 
                     f"--app={app_url}",
@@ -397,14 +424,10 @@ def open_browser():
                 continue # Try the next browser path
 
     if not launched:
-        # Fallback to standard webbrowser if no App Mode browser could be found
         print("No App Mode browser found. Falling back to default browser tab.")
         webbrowser.open_new_tab(app_url)
 
 # Jalankan aplikasi Flask
 if __name__ == "__main__":
-
-    # Launch browser in a separate thread to avoid blocking the Flask startup
     Thread(target=open_browser).start()
-    
     app.run(debug=True, use_reloader=False)
