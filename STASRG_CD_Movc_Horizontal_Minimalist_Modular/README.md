@@ -1,3 +1,11 @@
+Default Configuration
+
+
+Keterangan:
+Ijo ke merah = masuk
+Merah ke ijo = keluar
+
+```json
 {
     "version": "vertical",
     "model_path": "head.pt",
@@ -7,12 +15,11 @@
         "height": 480
     },
     "tracking": {
-        "max_disappeared": 100,
-        "swap_direction": true
+        "max_disappeared": 100
     },
     "vertical_lines": {
-        "entry_line_position": 310,
-        "exit_line_position": 330
+        "entry_line_position": 330,
+        "exit_line_position": 310
     },
     "horizontal_lines": {
         "entry_line_position": 250,
@@ -29,3 +36,4 @@
         "output_directory": "Crowded Detection Video"
     }
 }
+```

@@ -4,12 +4,6 @@ let maxDataPoints = 50; // Maksimal 50 titik data terakhir
 let timeLabels = [];
 let countData = [];
 let lastChartUpdate = Date.now(); // Waktu terakhir update grafik
-const gambarArray = [
-    "/static/stas.png",
-    "/static/telkom_logo.png",
-    "/static/econique_logo.png"
-];
-let index_gambar = 0; // Indeks gambar saat ini
 
 // NEW: Function to fetch the crowd threshold from the backend
 async function fetchConfig() {
@@ -17,7 +11,7 @@ async function fetchConfig() {
         const response = await fetch("/api/config");
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const config = await response.json();
-        
+
         // Update the global threshold variable
         if (config.capacity && config.capacity.max_crowd_count) {
             crowdThreshold = config.capacity.max_crowd_count;
@@ -48,7 +42,7 @@ async function fetchCountData() {
         statusCardElement.classList.add("bg-white"); // Explicitly set to white
 
         // Determine Overcrowded (Assuming your threshold is still 150 or fetched)
-        if (currentCount > crowdThreshold) { 
+        if (currentCount > crowdThreshold) {
             statusTextElement.textContent = "PENUH";
 
             statusTextElement.textContent = "PENUH";
@@ -60,23 +54,23 @@ async function fetchCountData() {
             // // --- RED/PENUH STATE ---
             // statusCardElement.classList.remove("bg-green-600", "bg-white");
             // statusCardElement.classList.add("bg-red-600");
-            
+
             // // Text color is white for contrast on the red background
             // statusTextElement.classList.remove("text-gray-800", "text-green-600"); 
             // statusTextElement.classList.add("text-white");
 
         } else {
             statusTextElement.textContent = "Normal";
-            
+
             // Apply Green/Dark Text Color for Normal state
-            statusTextElement.classList.remove("text-red-600", "text-green-600"); 
+            statusTextElement.classList.remove("text-red-600", "text-green-600");
             statusTextElement.classList.add("text-gray-800"); // Default dark gray text (Normal)
-            
+
             // --- GREEN/NORMAL STATE (FIXED LOGIC) ---
             // // 1. Remove the opposing color
             // statusCardElement.classList.remove("bg-red-600", "bg-white"); 
             // statusCardElement.classList.add("bg-green-600"); 
-            
+
             // // 3. Set text color to white for contrast on the green background
             // statusTextElement.classList.remove("text-gray-800", "text-red-600"); 
             // statusTextElement.classList.add("text-white"); 
@@ -102,14 +96,6 @@ async function resetCount() {
     }
 }
 
-
-// Fungsi untuk mengganti gambar
-function gantiGambar() {
-    index_gambar = (index_gambar + 1) % gambarArray.length; // Menghitung indeks gambar berikutnya
-    document.getElementById('logo').src = gambarArray[index_gambar]; // Mengganti src gambar
-}
-
-
 window.addEventListener("load", () => {
     // 1. Fetch config first
     fetchConfig();
@@ -117,5 +103,4 @@ window.addEventListener("load", () => {
     // 2. Start data updateds
     fetchCountData();
     setInterval(fetchCountData, 1000); // Perbarui data setiap 1 detik
-    setInterval(gantiGambar, 3000); // Mengganti gambar setiap 3 detik
 });

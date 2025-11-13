@@ -85,6 +85,9 @@ class VerticalProcessor:
     def __init__(self, config):
         self.config = config
 
+        # --- NEW: Get the swap direction flag ---
+        self.swap_direction = self.config["tracking"].get("swap_direction", False)
+
         self.entry_line_position = self.config["vertical_lines"]["entry_line_position"]
         self.exit_line_position = self.config["vertical_lines"]["exit_line_position"]
 
@@ -200,24 +203,67 @@ class VerticalProcessor:
 
     def _detect_direction(self, object_id, cx, prev_cx):
         """Detects and updates entry/exit counts based on object's horizontal (x) movement."""
-        # Removed: with self.data_lock:
-        if prev_cx is not None:
-            # Movement to the right
-            if prev_cx < cx:
-                if prev_cx < self.exit_line_position <= cx:
-                    if object_id not in self.counted_on_exit:
-                        self.exit_count += 1
-                        self.counted_on_exit.add(object_id)
-                        self.counted_on_entry.discard(object_id)
-                    return "Exit"
-            # Movement to the left
-            elif prev_cx > cx:
+        if prev_cx is None:
+            return "Orang"
+        
+        # NOTE ON SWAP:
+        # If self.swap_direction is True, the values of self.entry_line_position 
+        # and self.exit_line_position in the processor instance are ALREADY SWAPPED 
+        # (done by app.py upon config save).
+        
+        # We define variables to hold the line positions *logically* for the current movement direction.
+        
+        if not self.swap_direction:
+            # Normal Logic (R -> L is Entry)
+            
+            # Line 1 (Entry) must be larger (further right) than Line 2 (Exit)
+            # Movement: prev_cx (Right) > cx (Left)
+            if prev_cx > cx:
+                # Moving Left (Entry)
+                # Check crossing the designated Entry line (self.entry_line_position)
                 if prev_cx > self.entry_line_position >= cx:
                     if object_id not in self.counted_on_entry:
                         self.entry_count += 1
                         self.counted_on_entry.add(object_id)
                         self.counted_on_exit.discard(object_id)
                     return "Entry"
+            
+            elif prev_cx < cx:
+                # Moving Right (Exit)
+                # Check crossing the designated Exit line (self.exit_line_position)
+                if prev_cx < self.exit_line_position <= cx:
+                    if object_id not in self.counted_on_exit:
+                        self.exit_count += 1
+                        self.counted_on_exit.add(object_id)
+                        self.counted_on_entry.discard(object_id)
+                    return "Exit"
+        
+        else:
+            # Swapped Logic (L -> R is Entry)
+            # Since app.py swapped the values, self.entry_line_position is now the line on the Left
+            # and self.exit_line_position is the line on the Right.
+            
+            # Movement: prev_cx (Left) < cx (Right)
+            if prev_cx < cx:
+                # Moving Right (Entry)
+                # Check crossing the *designated Exit line* which is now the logical Entry line
+                if prev_cx < self.exit_line_position <= cx:
+                    if object_id not in self.counted_on_entry: 
+                        self.entry_count += 1
+                        self.counted_on_entry.add(object_id)
+                        self.counted_on_exit.discard(object_id)
+                    return "Entry"
+            
+            # Movement: prev_cx (Right) > cx (Left)
+            elif prev_cx > cx:
+                # Moving Left (Exit)
+                # Check crossing the *designated Entry line* which is now the logical Exit line
+                if prev_cx > self.entry_line_position >= cx:
+                    if object_id not in self.counted_on_exit: 
+                        self.exit_count += 1
+                        self.counted_on_exit.add(object_id)
+                        self.counted_on_entry.discard(object_id)
+                    return "Exit"
 
         return "Orang"
 

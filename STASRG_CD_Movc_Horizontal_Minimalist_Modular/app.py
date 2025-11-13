@@ -7,7 +7,7 @@ from flask import Flask, Response, render_template, jsonify, send_file, request
 import cv2
 from io import BytesIO
 from openpyxl import Workbook
-import threading  # Still needed for os._exit in shutdown, but not for core logic
+import threading
 from config_writer import save_config_to_file
 import numpy as np
 
@@ -53,13 +53,17 @@ print(f"Versi: {VERSION.upper()}")
 # Dynamically select and instantiate the processor
 if VERSION == "vertical":
     ProcessorClass = VerticalProcessor
+    DIMENSION_KEY = "vertical_lines" # Key to access line positions
     print("Versi: Vertical Line Counting.")
 elif VERSION == "horizontal":
     ProcessorClass = HorizontalProcessor
+    DIMENSION_KEY = "horizontal_lines" # Key to access line positions
     print("Versi: Horizontal Line Counting.")
 else:
     print(f"ERROR: Unknown version '{VERSION}' in config.json. Using Horizontal.")
     ProcessorClass = HorizontalProcessor
+    DIMENSION_KEY = "horizontal_lines"
+
 
 try:
     processor = ProcessorClass(config=CONFIG)
@@ -235,24 +239,67 @@ def save_frontend_config():
     if not data:
         return jsonify({"success": False, "message": "No data received."}), 400
 
-    # 1. Rebuild the Nested CONFIG Structure using received data
-    new_config_data = CONFIG.copy() # Start with the currently loaded structure
+    # 1. Start with a copy of the current configuration
+    new_config_data = CONFIG.copy() 
 
-    # Update simple and nested keys
-    new_config_data["version"] = data.get('version')
+    # Update simple and nested keys (non-line related)
+    current_version = data.get('version')
+    new_config_data["version"] = current_version
     new_config_data["capacity"]["max_crowd_count"] = data.get('max_crowd_count')
     new_config_data["resize"]["width"] = data.get('resize_width')
     new_config_data["tracking"]["max_disappeared"] = data.get('max_disappeared')
-    
-    new_config_data["horizontal_lines"]["entry_line_position"] = data.get('h_entry')
-    new_config_data["horizontal_lines"]["exit_line_position"] = data.get('h_exit')
-    new_config_data["vertical_lines"]["entry_line_position"] = data.get('v_entry')
-    new_config_data["vertical_lines"]["exit_line_position"] = data.get('v_exit')
-
     new_config_data["initial_counts"]["entry"] = data.get('initial_entry')
     new_config_data["initial_counts"]["exit"] = data.get('initial_exit')
 
-    # 2. Save the structure to the file
+    # --- NEW LOGIC START ---
+    
+    # 1a. Store raw line positions from form data (must be converted to int here)
+    h_entry_raw = int(data.get('h_entry'))
+    h_exit_raw = int(data.get('h_exit'))
+    v_entry_raw = int(data.get('v_entry'))
+    v_exit_raw = int(data.get('v_exit'))
+
+    # 1b. Handle Swap Direction Flag
+    swap_val = data.get('swap_direction')
+    is_swapped = bool(int(swap_val)) if isinstance(swap_val, str) and swap_val.isdigit() else bool(swap_val)
+    new_config_data["tracking"]["swap_direction"] = is_swapped
+    
+    
+    # 2. Update Horizontal Lines (Gerak Vertikal - Y axis)
+    
+    # By default, use the raw values from the form:
+    h_entry_final = h_entry_raw
+    h_exit_final = h_exit_raw
+    
+    # Check if this version is active AND swap is requested:
+    if is_swapped and current_version == "horizontal":
+        # If swapped, swap the values for storage
+        h_entry_final = h_exit_raw
+        h_exit_final = h_entry_raw
+        
+    new_config_data["horizontal_lines"]["entry_line_position"] = h_entry_final
+    new_config_data["horizontal_lines"]["exit_line_position"] = h_exit_final
+
+
+    # 3. Update Vertical Lines (Gerak Horizontal - X axis)
+
+    # By default, use the raw values from the form:
+    v_entry_final = v_entry_raw
+    v_exit_final = v_exit_raw
+    
+    # Check if this version is active AND swap is requested:
+    if is_swapped and current_version == "vertical":
+        # If swapped, swap the values for storage
+        v_entry_final = v_exit_raw
+        v_exit_final = v_entry_raw
+        
+    new_config_data["vertical_lines"]["entry_line_position"] = v_entry_final
+    new_config_data["vertical_lines"]["exit_line_position"] = v_exit_final
+
+    # --- NEW LOGIC END ---
+
+
+    # 4. Save the structure to the file
     if save_config_to_file(new_config_data):
         # Update the global CONFIG dictionary in memory (only applies to future GETs)
         # Note: The active processor is NOT reloaded. A restart is MANDATORY.
@@ -280,7 +327,6 @@ def tentang():
     """Menyajikan halaman Tentang Aplikasi."""
     return render_template("tentang.html")
 
-
 @app.route("/shutdown", methods=["POST"])
 def shutdown():
     """Shuts down the running Flask server."""
@@ -289,7 +335,6 @@ def shutdown():
     # Use threading for os._exit to gracefully close the werkzeug server
     threading.Thread(target=lambda: time.sleep(1) or os._exit(0)).start()
     return jsonify({"success": True, "message": "Application is closing."})
-
 
 @app.route("/recording/toggle", methods=["POST"])
 def toggle_recording_route():

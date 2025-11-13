@@ -43,107 +43,122 @@
     </header>
 
 
-    <div class="bg-white shadow-lg rounded-lg p-8">
-        <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Pengaturan Konfigurasi Real-time</h2>
+    <div class="container mx-auto p-4 md:p-8">
+        <div class="bg-white shadow-lg rounded-lg p-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Pengaturan Konfigurasi Real-time</h2>
 
-        <div id="status-message" class="hidden p-3 mb-4 text-sm text-green-700 bg-green-100 rounded-lg">
-            Konfigurasi berhasil diperbarui! Restart aplikasi untuk menerapkan semua perubahan.
+            <div id="status-message" class="hidden p-3 mb-4 text-sm text-green-700 bg-green-100 rounded-lg">
+                Konfigurasi berhasil diperbarui! Restart aplikasi untuk menerapkan semua perubahan.
+            </div>
+
+            <form id="config-form" class="space-y-6" onsubmit="saveConfig(event)">
+
+                <h3 class="text-xl font-semibold text-blue-600 border-b pb-1">Mode & Resolusi</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div>
+                        <label for="version" class="block text-sm font-medium text-gray-700">Versi Aktif</label>
+                        <select id="version" name="version"
+                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="horizontal">Horizontal (Gerak Vertikal)</option>
+                            <option value="vertical">Vertical (Gerak Horizontal)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="max_crowd_count" class="block text-sm font-medium text-gray-700">Batas Maksimum
+                            Kerumunan</label>
+                        <input type="number" id="max_crowd_count" name="max_crowd_count" min="1" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="resize_width" class="block text-sm font-medium text-gray-700">Resolusi Lebar
+                            (px)</label>
+                        <input type="number" id="resize_width" name="resize_width" min="100" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div class="col-span-1 md:col-span-2 lg:col-span-1">
+                        <label for="swap_direction" class="block text-sm font-medium text-gray-700">Tukar Arah Hitungan
+                            & Posisi Garis</label>
+                        <select id="swap_direction" name="swap_direction"
+                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="0">Normal (Masuk = Kanan/Bawah)</option>
+                            <option value="1">Tukar (Masuk = Kiri/Atas)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="max_disappeared" class="block text-sm font-medium text-gray-700">Toleransi Pelacakan
+                            (max_disappeared)</label>
+                        <input type="number" id="max_disappeared" name="max_disappeared" min="1" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+
+                <h3 class="text-xl font-semibold text-blue-600 border-b pb-1 mt-6">Pengaturan Garis Horizontal (Gerak
+                    Vertikal)</h3>
+                <p class="text-sm text-gray-500">Nilai-nilai ini akan ditukar secara otomatis saat mode 'Tukar Arah'
+                    aktif.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="h_entry" class="block text-sm font-medium text-gray-700">Posisi Garis Masuk
+                            (Y-axis)</label>
+                        <input type="number" id="h_entry" name="h_entry" min="0" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="h_exit" class="block text-sm font-medium text-gray-700">Posisi Garis Keluar
+                            (Y-axis)</label>
+                        <input type="number" id="h_exit" name="h_exit" min="0" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+
+                <h3 class="text-xl font-semibold text-blue-600 border-b pb-1 mt-6">Pengaturan Garis Vertikal (Gerak
+                    Horizontal)</h3>
+                <p class="text-sm text-gray-500">Nilai-nilai ini akan ditukar secara otomatis saat mode 'Tukar Arah'
+                    aktif.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="v_entry" class="block text-sm font-medium text-gray-700">Posisi Garis Masuk
+                            (X-axis)</label>
+                        <input type="number" id="v_entry" name="v_entry" min="0" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="v_exit" class="block text-sm font-medium text-gray-700">Posisi Garis Keluar
+                            (X-axis)</label>
+                        <input type="number" id="v_exit" name="v_exit" min="0" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+
+                <h3 class="text-xl font-semibold text-blue-600 border-b pb-1 mt-6">Hitungan Awal</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="initial_entry" class="block text-sm font-medium text-gray-700">Hitungan Masuk
+                            Awal</label>
+                        <input type="number" id="initial_entry" name="initial_entry" min="0" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="initial_exit" class="block text-sm font-medium text-gray-700">Hitungan Keluar
+                            Awal</label>
+                        <input type="number" id="initial_exit" name="initial_exit" min="0" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+
+                <div class="pt-5 flex gap-4">
+                    <button type="submit"
+                        class="flex-1 justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
+                        Simpan Perubahan & Perlu Restart
+                    </button>
+                </div>
+            </form>
+
+            <button onclick="sendShutdown()"
+                class="mt-4 w-full justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition duration-150">
+                Matikan Aplikasi
+            </button>
         </div>
-
-        <form id="config-form" class="space-y-6" onsubmit="saveConfig(event)">
-
-            <h3 class="text-xl font-semibold text-blue-600 border-b pb-1">Mode & Resolusi</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="version" class="block text-sm font-medium text-gray-700">Versi Aktif</label>
-                    <select id="version" name="version"
-                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                        <option value="horizontal">Horizontal (Gerak Vertikal)</option>
-                        <option value="vertical">Vertical (Gerak Horizontal)</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="max_crowd_count" class="block text-sm font-medium text-gray-700">Batas Maksimum
-                        Kerumunan</label>
-                    <input type="number" id="max_crowd_count" name="max_crowd_count" min="1" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="resize_width" class="block text-sm font-medium text-gray-700">Resolusi Lebar
-                        (px)</label>
-                    <input type="number" id="resize_width" name="resize_width" min="100" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="max_disappeared" class="block text-sm font-medium text-gray-700">Toleransi Pelacakan
-                        (max_disappeared)</label>
-                    <input type="number" id="max_disappeared" name="max_disappeared" min="1" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-            </div>
-
-            <h3 class="text-xl font-semibold text-blue-600 border-b pb-1 mt-6">Pengaturan Garis Horizontal (Gerak
-                Vertikal)</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="h_entry" class="block text-sm font-medium text-gray-700">Posisi Garis Masuk
-                        (Y-axis)</label>
-                    <input type="number" id="h_entry" name="h_entry" min="0" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="h_exit" class="block text-sm font-medium text-gray-700">Posisi Garis Keluar
-                        (Y-axis)</label>
-                    <input type="number" id="h_exit" name="h_exit" min="0" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-            </div>
-
-            <h3 class="text-xl font-semibold text-blue-600 border-b pb-1 mt-6">Pengaturan Garis Vertikal (Gerak
-                Horizontal)</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="v_entry" class="block text-sm font-medium text-gray-700">Posisi Garis Masuk
-                        (X-axis)</label>
-                    <input type="number" id="v_entry" name="v_entry" min="0" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="v_exit" class="block text-sm font-medium text-gray-700">Posisi Garis Keluar
-                        (X-axis)</label>
-                    <input type="number" id="v_exit" name="v_exit" min="0" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-            </div>
-
-            <h3 class="text-xl font-semibold text-blue-600 border-b pb-1 mt-6">Hitungan Awal</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="initial_entry" class="block text-sm font-medium text-gray-700">Hitungan Masuk
-                        Awal</label>
-                    <input type="number" id="initial_entry" name="initial_entry" min="0" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="initial_exit" class="block text-sm font-medium text-gray-700">Hitungan Keluar
-                        Awal</label>
-                    <input type="number" id="initial_exit" name="initial_exit" min="0" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-            </div>
-
-            <div class="pt-5">
-                <button type="submit"
-                    class="w-full justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
-                    Simpan Perubahan & Perlu Restart
-                </button>
-            </div>
-        </form>
-
-        <button onclick="sendShutdown()"
-            class="mt-4 w-full justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition duration-150">
-            Matikan Aplikasi
-        </button>
     </div>
 
 
@@ -152,57 +167,87 @@
 
         const STATUS_MSG = document.getElementById('status-message');
 
+        function updateStatus(message, isSuccess = true) {
+            STATUS_MSG.textContent = message;
+            STATUS_MSG.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+            if (isSuccess) {
+                STATUS_MSG.classList.add('bg-green-100', 'text-green-700');
+            } else {
+                STATUS_MSG.classList.add('bg-red-100', 'text-red-700');
+            }
+        }
+
         // --- Fungsi 1: Ambil data konfigurasi dan isi formulir ---
         async function fetchConfigAndPopulate() {
             try {
-                const response = await fetch('/api/config'); // Menggunakan rute baru
+                const response = await fetch('/api/config');
                 if (!response.ok) throw new Error('Gagal mengambil konfigurasi.');
 
                 const config = await response.json();
 
-                // Isi field form dengan nilai dari config.json
+                // Dapatkan nilai baris yang *telah diproses* oleh app.py (sudah di-swap jika mode swap aktif)
+                const h_entry_val = config.horizontal_lines.entry_line_position;
+                const h_exit_val = config.horizontal_lines.exit_line_position;
+                const v_entry_val = config.vertical_lines.entry_line_position;
+                const v_exit_val = config.vertical_lines.exit_line_position;
+
+                // Dapatkan mode swap saat ini
+                const isSwapped = config.tracking.swap_direction === true;
+
+                // --- TAMPILKAN NILAI DI FORMULIR SESUAI DENGAN ATURAN TAMPILAN NORMAL ---
+                // Tujuannya: Selalu menampilkan garis entry/exit yang benar di formulir,
+                // terlepas dari apakah garis yang tersimpan di config.json sudah tertukar atau belum.
+                // Karena app.py menukar nilai saat menyimpan, kita akan membiarkan nilai apa adanya di form.
+
                 document.getElementById('version').value = config.version || 'horizontal';
                 document.getElementById('max_crowd_count').value = config.capacity.max_crowd_count || 150;
                 document.getElementById('resize_width').value = config.resize.width || 640;
                 document.getElementById('max_disappeared').value = config.tracking.max_disappeared || 50;
 
-                document.getElementById('h_entry').value = config.horizontal_lines.entry_line_position || 200;
-                document.getElementById('h_exit').value = config.horizontal_lines.exit_line_position || 280;
+                document.getElementById('swap_direction').value = isSwapped ? '1' : '0';
 
-                document.getElementById('v_entry').value = config.vertical_lines.entry_line_position || 280;
-                document.getElementById('v_exit').value = config.vertical_lines.exit_line_position || 360;
+                // Tampilkan nilai yang tersimpan di config.json
+                document.getElementById('h_entry').value = h_entry_val;
+                document.getElementById('h_exit').value = h_exit_val;
+                document.getElementById('v_entry').value = v_entry_val;
+                document.getElementById('v_exit').value = v_exit_val;
 
                 document.getElementById('initial_entry').value = config.initial_counts.entry || 0;
                 document.getElementById('initial_exit').value = config.initial_counts.exit || 0;
 
             } catch (error) {
                 console.error('Error fetching config:', error);
-                STATUS_MSG.textContent = 'Gagal memuat konfigurasi. Pastikan aplikasi berjalan.';
-                STATUS_MSG.classList.remove('hidden', 'bg-green-100', 'text-green-700');
-                STATUS_MSG.classList.add('bg-red-100', 'text-red-700');
+                updateStatus('Gagal memuat konfigurasi. Pastikan aplikasi berjalan.', false);
             }
         }
 
         // --- Fungsi 2: Kirim data formulir ke backend ---
         async function saveConfig(event) {
-            event.preventDefault(); // Mencegah form submit default
+            event.preventDefault();
 
             const formData = new FormData(document.getElementById('config-form'));
+
+            // NOTE: Kami mengirimkan nilai yang *dimasukkan* pengguna,
+            // dan app.py akan menentukan apakah nilai entry/exit harus ditukar saat menyimpan ke file.
             const data = {
                 version: formData.get('version'),
                 max_crowd_count: parseInt(formData.get('max_crowd_count')),
                 resize_width: parseInt(formData.get('resize_width')),
                 max_disappeared: parseInt(formData.get('max_disappeared')),
+
+                swap_direction: parseInt(formData.get('swap_direction')),
+
                 h_entry: parseInt(formData.get('h_entry')),
                 h_exit: parseInt(formData.get('h_exit')),
                 v_entry: parseInt(formData.get('v_entry')),
                 v_exit: parseInt(formData.get('v_exit')),
+
                 initial_entry: parseInt(formData.get('initial_entry')),
                 initial_exit: parseInt(formData.get('initial_exit'))
             };
 
             try {
-                const response = await fetch('/api/config', { // Menggunakan rute POST baru
+                const response = await fetch('/api/config', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -211,25 +256,17 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    STATUS_MSG.textContent = result.message;
-                    STATUS_MSG.classList.remove('hidden', 'bg-red-100', 'text-red-700');
-                    STATUS_MSG.classList.add('bg-green-100', 'text-green-700');
-                    // Mengirim shutdown setelah simpan adalah praktik yang baik
-                    // alert('Konfigurasi berhasil disimpan. Aplikasi akan dimatikan agar perubahan diterapkan.');
-                    // sendShutdown(); 
-
+                    updateStatus(result.message, true);
                 } else {
                     throw new Error(result.message || 'Gagal menyimpan konfigurasi.');
                 }
             } catch (error) {
                 console.error('Error saving config:', error);
-                STATUS_MSG.textContent = `Gagal menyimpan: ${error.message}.`;
-                STATUS_MSG.classList.remove('hidden', 'bg-green-100', 'text-green-700');
-                STATUS_MSG.classList.add('bg-red-100', 'text-red-700');
+                updateStatus(`Gagal menyimpan: ${error.message}.`, false);
             }
         }
 
-        // --- Fungsi 3: Shutdown Aplikasi (Menggunakan rute yang sudah ada) ---
+        // --- Fungsi 3: Shutdown Aplikasi ---
         async function sendShutdown() {
             try {
                 await fetch('/shutdown', { method: 'POST' });

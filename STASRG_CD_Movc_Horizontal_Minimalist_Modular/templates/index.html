@@ -164,6 +164,29 @@
             initializeRecordingButton();
         });
     </script>
+
+        <script>
+        const logos = [
+            "{{url_for('static', filename='stas.png')}}",
+            "{{url_for('static', filename='econique_logo.png')}}",
+            "{{url_for('static', filename='telkom_logo.png')}}",
+        ];
+
+        let currentIndex = 0;
+
+        function changeLogo() {
+            const logoElement = document.getElementById('logo');
+            logoElement.style.opacity = 0;
+
+            setTimeout(() => {
+                currentIndex = (currentIndex + 1) % logos.length;
+                logoElement.src = logos[currentIndex];
+                logoElement.style.opacity = 1;
+            }, 500);
+        }
+
+        setInterval(changeLogo, 3000);
+    </script>
 </body>
 
 </html>

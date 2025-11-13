@@ -19,7 +19,6 @@
             </div>
             <nav>
                 <div class="ml-10 flex items-baseline space-x-4">
-
                     <a href="/"
                         class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
                         Kembali
@@ -44,47 +43,18 @@
         </div>
     </header>
 
-    <div class="bg-white shadow-lg rounded-lg p-8">
-        <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Petunjuk Penggunaan Sistem</h2>
-
-        <section class="mb-8">
-            <h3 class="text-xl font-semibold text-blue-600 mb-3">1. Memilih Mode Deteksi</h3>
-            <p class="text-gray-700">Sistem ini mendukung dua mode penghitungan yang diatur melalui file
-                <code>config.json</code>:
-            </p>
-            <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
-                <li>**Mode Horizontal:** Garis diatur secara horizontal (sumbu Y). Digunakan untuk menghitung gerakan
-                    Vertikal (naik/turun).</li>
-                <li>**Mode Vertikal:** Garis diatur secara vertikal (sumbu X). Digunakan untuk menghitung gerakan
-                    Horizontal (kiri/kanan).</li>
-            </ul>
-        </section>
-
-        <section class="mb-8">
-            <h3 class="text-xl font-semibold text-blue-600 mb-3">2. Fungsionalitas Dashboard</h3>
-            <ul class="list-disc list-inside ml-4 mt-2 space-y-2">
-                <li>**Live Video:** Menampilkan hasil deteksi real-time (Bounding Box dan Garis) dengan Overlay
-                    Timestamp.</li>
-                <li>**Current's Visitor:** Menampilkan total pengunjung saat ini (Masuk - Keluar).</li>
-                <li>**Tombol Merekam:** Gunakan tombol **Mulai Merekam** untuk menyimpan video output (termasuk deteksi)
-                    ke folder <code>/recordings</code>. File akan otomatis dinamai dengan waktu dan versi
-                    (Vertical/Horizontal).</li>
-                <li>**Download Excel:** Mengunduh data historis hitungan (perubahan hitungan) ke dalam file Excel untuk
-                    audit.</li>
-                <li>**Reset Hitungan:** Mengatur ulang semua total hitungan (Masuk, Keluar, Saat Ini) ke nol.</li>
-            </ul>
-        </section>
-
-        <section>
-            <h3 class="text-xl font-semibold text-blue-600 mb-3">3. Optimasi (Troubleshooting)</h3>
-            <p class="text-gray-700">Untuk performa terbaik, pastikan spesifikasi perangkat keras (CPU/GPU) Anda
-                memadai. Jika FPS terasa lambat, coba:</p>
-            <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
-                <li>Kurangi resolusi frame (<code>resize.width/height</code>) di <code>config.json</code>.</li>
-                <li>Tingkatkan nilai <code>max_disappeared</code> untuk membuat pelacakan lebih toleran terhadap
-                    kegagalan deteksi sesaat.</li>
-            </ul>
-        </section>
+    <div class="container mx-auto p-4 md:p-8">
+        <div class="bg-white shadow-lg rounded-lg p-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Petunjuk Penggunakan Aplikasi Crowded
+                Detection</h2>
+            <h3 class="text-xl font-semibold text-blue-600 border-b pb-1">Mode & Resolusi</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                    <label for="version" class="block text-sm font-medium text-gray-700">Versi Aktif</label>
+                </div>
+            </div>
+        </div>
+    </div>
     </div>
 </body>
 
