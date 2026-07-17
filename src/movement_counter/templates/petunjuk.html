@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petunjuk Penggunaan - Deteksi Kerumunan</title>
+    <link href="{{ url_for('static', filename='css/tailwind.min.css') }}" rel="stylesheet">
+    <link rel="icon" href="static/G_STAS.png" type="image/png">
+</head>
+
+<body class="bg-gray-50 flex flex-col min-h-screen">
+    <header class="bg-white shadow-md mb-4">
+        <div class="container mx-auto flex justify-between items-center p-4">
+            <div class="flex items-center">
+                <img id="logo" src="{{ url_for('static', filename='stas.png') }}" alt="Crowded Detection Logo"
+                    class="h-10 mr-3 transition-opacity duration-300">
+            </div>
+            <nav>
+                <div class="ml-10 flex items-baseline space-x-4">
+                    <a href="/"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                        Kembali
+                    </a>
+
+                    <a href="/petunjuk"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 font-semibold">
+                        Petunjuk
+                    </a>
+
+                    <a href="/konfigurasi"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                        Konfigurasi
+                    </a>
+
+                    <a href="/tentang"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                        Tentang
+                    </a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container mx-auto p-4 md:p-8 flex-grow">
+        <div class="bg-white shadow-lg rounded-lg p-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Petunjuk Penggunaan Aplikasi Crowded
+                Detection</h2>
+
+            <div class="space-y-8">
+                
+                <section>
+                    <h3 class="text-xl font-semibold text-blue-600 border-b pb-1 mb-3">1. Versi Aplikasi Aktif</h3>
+                    <div class="flex items-start bg-blue-50 p-4 rounded-lg">
+                        <span class="text-3xl text-blue-800 mr-4">📐</span>
+                        <div>
+                            <p class="font-medium text-gray-800 mb-2">Penentuan Mode Penghitungan</p>
+                            <p class="text-sm text-gray-600 mb-3">Aplikasi ini berjalan dalam dua mode utama yang ditentukan di file <code>config.json</code>:</p>
+                            <ul class="list-none space-y-2 text-sm text-gray-700 ml-4">
+                                <li><strong>&rarr; Versi Vertikal:</strong> Garis penghitung adalah **Vertikal**. Digunakan untuk mendeteksi pergerakan **Horizontal (kiri-kanan)**.</li>
+                                <li><strong>&darr; Versi Horizontal:</strong> Garis penghitung adalah **Horizontal**. Digunakan untuk mendeteksi pergerakan **Vertikal (atas-bawah)**.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <h3 class="text-xl font-semibold text-blue-600 border-b pb-1 mb-3">2. Menu Utama (Index)</h3>
+                    <div class="space-y-4">
+                        
+                        <div class="flex items-start">
+                            <span class="text-2xl text-red-500 mr-3">🔴</span>
+                            <div>
+                                <p class="font-medium text-gray-800">Live Video Feed & Hitungan</p>
+                                <p class="text-sm text-gray-600">Menampilkan hasil deteksi objek (kotak batas) dan garis penghitung secara *real-time*. Hitungan **ENTRY**, **EXIT**, dan **CURRENT** (saat ini) diperbarui setiap detik.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <span class="text-2xl text-green-500 mr-3">🎥</span>
+                            <div>
+                                <p class="font-medium text-gray-800">Tombol 'Mulai/Stop Rekam'</p>
+                                <p class="text-sm text-gray-600">Digunakan untuk merekam *live video feed* yang telah diberi anotasi (kotak batas, garis, hitungan, timestamp) ke file MP4 di folder output.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <span class="text-2xl text-yellow-500 mr-3">🔄</span>
+                            <div>
+                                <p class="font-medium text-gray-800">Tombol 'Reset Hitungan'</p>
+                                <p class="text-sm text-gray-600">Mengatur ulang hitungan ENTRY, EXIT, dan menghapus seluruh riwayat data grafik ke nilai awal (biasanya 0).</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <span class="text-2xl text-indigo-500 mr-3">📊</span>
+                            <div>
+                                <p class="font-medium text-gray-800">Tombol 'Unduh Data'</p>
+                                <p class="text-sm text-gray-600">Mengunduh data hitungan historis (Timestamp, Entry, Exit, Current) ke file Excel (<code>.xlsx</code>) untuk analisis lebih lanjut.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <h3 class="text-xl font-semibold text-blue-600 border-b pb-1 mb-3">3. Halaman Konfigurasi</h3>
+                    <div class="flex items-start bg-yellow-50 p-4 rounded-lg">
+                        <span class="text-3xl text-orange-600 mr-4">⚙️</span>
+                        <div>
+                            <p class="font-medium text-gray-800 mb-2">Penyesuaian Parameter Aplikasi</p>
+                            <p class="text-sm text-gray-600">Gunakan halaman ini untuk mengubah: **Versi**, **Posisi Garis** (Entry/Exit), **Arah Hitungan (Swap Direction)**, **Resolusi Video**, dan nilai hitungan awal.</p>
+                            <p class="text-sm font-bold text-red-600 mt-2">PENTING: Setiap perubahan konfigurasi yang disimpan memerlukan **RESTART APLIKASI** agar diterapkan sepenuhnya.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </div>
+    
+    <footer class="bg-white shadow-md mt-4 p-4 text-center text-gray-500 text-sm">
+        &copy; 2025 CoE STAS-RG | Telkom University
+    </footer>
+
+</body>
+
+<script>
+    const logos = [
+        "{{url_for('static', filename='stas.png')}}",
+        "{{url_for('static', filename='econique_logo.png')}}",
+        "{{url_for('static', filename='telkom_logo.png')}}",
+    ];
+
+    let currentIndex = 0;
+
+    function changeLogo() {
+        const logoElement = document.getElementById('logo');
+        logoElement.style.opacity = 0;
+
+        setTimeout(() => {
+            currentIndex = (currentIndex + 1) % logos.length;
+            logoElement.src = logos[currentIndex];
+            logoElement.style.opacity = 1;
+        }, 500);
+    }
+
+    setInterval(changeLogo, 3000);
+</script>
+
+</html>

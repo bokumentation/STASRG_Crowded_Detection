@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Crowded Detection System">
+    <meta name="keywords" content="crowd, detection, monitoring">
+    <title>Crowded Detection</title>
+    <link rel="icon" href="static/G_STAS.png" type="image/png">
+    <link href="{{ url_for('static', filename='css/tailwind.min.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/chart.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+</head>
+
+<body class="bg-gray-50 flex flex-col min-h-screen">
+    <header class="bg-white shadow-md mb-4">
+        <div class="container mx-auto flex justify-between items-center p-4">
+            <div class="flex items-center">
+                <img id="logo" src="{{ url_for('static', filename='stas.png') }}" alt="Crowded Detection Logo"
+                    class="h-10 mr-3 transition-opacity duration-300">
+            </div>
+            <nav>
+                <div class="ml-10 flex items-baseline space-x-4">
+
+                    <button id="record-btn" onclick="toggleRecording()"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-white bg-gray-500 hover:bg-gray-700">
+                        ▶ Mulai Merekam
+                    </button>
+
+                    <a href="/download_excel"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-blue-300 hover:bg-blue-700 hover:text-white">
+                        Download Data
+                    </a>
+
+                    <button onclick="resetCount()"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-red-300 hover:bg-red-700 hover:text-white">
+                        Reset Hitungan
+                    </button>
+
+                    <a href="/petunjuk"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                        Petunjuk
+                    </a>
+
+                    <a href="/konfigurasi"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                        Konfigurasi
+                    </a>
+
+                    <a href="/tentang"
+                        class="rounded-xl px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900">
+                        Tentang
+                    </a>
+
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <div class="p-4 flex flex-col md:flex-row gap-4">
+        <div class="border bg-white shadow-md rounded-lg p-6 md:w-1/2">
+            <h3 class="text-xl font-semibold text-center mb-4 text-gray-600">Live Video</h3>
+            <img src="{{ url_for('video_feed') }}" alt="Live Video Feed" class="w-full rounded-lg">
+        </div>
+
+        <style>
+            .text-10xl {
+                font-size: 10rem;
+            }
+        </style>
+
+        <div class="border bg-white shadow-md rounded-lg p-6 md:w-1/2 text-center gap-4">
+            <p class="text-xl text-gray-600 font-semibold mb-4">Pengunjung Terdeteksi Kamera</p>
+            <div class="border rounded-lg p-4 flex-row items-center mt-8 ">
+                <div class="text-center ">
+                    <h3 class="text-4xl text-gray-500 font-semibold">Masuk</h3>
+                    <p class="text-10xl font-bold text-green-600" id="entry-count">0</p>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-4xl text-gray-500 font-semibold">Keluar</h3>
+                    <p class="text-10xl font-bold text-red-600" id="exit-count">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div class="flex flex-col md:flex-row gap-4 mb-4 p-4">
+    <div id="status-card" class="border bg-white shadow-lg rounded-xl p-6 md:w-1/3 flex items-center justify-center">
+        <div class="">
+            <h3 class="text-sm font-medium text-gray-500 text-center mb-2">Status Pengunjung</h3>
+            <p class="text-4xl font-bold text-center text-gray-800" id="status">Normal</p>
+        </div>
+    </div>
+
+    <div class="border bg-white shadow-lg rounded-xl p-6 md:w-2/3 flex flex-col justify-center">
+        <h3 class="text-xl text-gray-600 font-semibold text-center mb-2">Perhitungan Pengunjung Saat Ini (Masuk - Keluar)</h3>
+        <p class="text-4xl font-bold text-blue-600 text-center" id="current-count">0</p>
+    </div>
+</div>
+
+    <footer class="bg-white p-4">
+    </footer>
+
+    <script>
+        async function initializeRecordingButton() {
+            try {
+                const response = await fetch("/recording/status");
+                const result = await response.json();
+
+                const button = document.getElementById('record-btn');
+                const statusDisplay = document.getElementById('status');
+
+                if (result.is_recording) {
+                    button.innerText = '◼ Stop Merekam';
+                    button.classList.remove('bg-gray-500', 'hover:bg-gray-700');
+                    button.classList.add('bg-red-500', 'hover:bg-red-700');
+                    statusDisplay.innerText = 'Status: Merekam...';
+                } else {
+                    button.innerText = '▶ Mulai Merekam';
+                    button.classList.remove('bg-red-500', 'hover:bg-red-700');
+                    button.classList.add('bg-gray-500', 'hover:bg-gray-700');
+                    statusDisplay.innerText = 'Status: Normal';
+                }
+
+            } catch (error) {
+                console.error("Gagal mengambil status perekaman:", error);
+            }
+        }
+
+        async function toggleRecording() {
+            const button = document.getElementById('record-btn');
+            const isRecording = button.innerText.includes('Stop');
+            const action = isRecording ? 'stop' : 'start';
+
+            try {
+                const response = await fetch(`/recording/toggle?action=${action}`, { method: 'POST' });
+                const result = await response.json();
+
+                if (result.success) {
+                    if (action === 'start') {
+                        button.innerText = '◼ Stop Merekam';
+                        button.classList.remove('bg-gray-500', 'hover:bg-gray-700');
+                        button.classList.add('bg-red-500', 'hover:bg-red-700');
+                        document.getElementById('status').innerText = 'Status: Recording...';
+                    } else {
+                        button.innerText = '▶ Mulai Merekam';
+                        button.classList.remove('bg-red-500', 'hover:bg-red-700');
+                        button.classList.add('bg-gray-500', 'hover:bg-gray-700');
+                        document.getElementById('status').innerText = 'Status: Normal';
+                        alert(`Video tersimpan di: ${result.file_path}`);
+                    }
+                } else {
+                    alert(`Gagal untuk ${action} rekaman: ${result.message}`);
+                }
+            } catch (error) {
+                console.error('Menyalakan perekam gagal:', error);
+                alert('Kesalahan saat tombol merekam.');
+            }
+        }
+
+        window.addEventListener("load", () => {
+
+            initializeRecordingButton();
+        });
+    </script>
+
+        <script>
+        const logos = [
+            "{{url_for('static', filename='stas.png')}}",
+            "{{url_for('static', filename='econique_logo.png')}}",
+            "{{url_for('static', filename='telkom_logo.png')}}",
+        ];
+
+        let currentIndex = 0;
+
+        function changeLogo() {
+            const logoElement = document.getElementById('logo');
+            logoElement.style.opacity = 0;
+
+            setTimeout(() => {
+                currentIndex = (currentIndex + 1) % logos.length;
+                logoElement.src = logos[currentIndex];
+                logoElement.style.opacity = 1;
+            }, 500);
+        }
+
+        setInterval(changeLogo, 3000);
+    </script>
+</body>
+
+</html>
