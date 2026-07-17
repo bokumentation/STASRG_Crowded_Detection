@@ -109,9 +109,10 @@ Semua parameter penting (posisi garis, swap direction, threshold keramaian, log 
 - Script `.ps1` dengan auto-venv: mahasiswa baru tinggal double-click
 
 ### 4. Error Handling
-- Kamera terputus: tampil frame error, bukan crash
-- Model gagal load: exit dengan pesan jelas, bukan `NoneType` error
-- Semua shared state dilindungi `threading.Lock`
+- **Movement Counter**: Kamera terputus tampil frame error visual "KAMERA TERPUTUS", bukan crash
+- **Head Counter**: Kamera terputus return HTTP 503 dengan pesan error
+- **Movement Counter**: Model gagal load -> exit dengan pesan jelas, bukan `NoneType` error
+- **Head Counter**: Shared state dilindungi `threading.Lock`
 
 ### 5. Dua Mode Garis (Movement Counter)
 Vertical dan horizontal line counting dalam satu aplikasi. Ganti mode via dropdown di halaman konfigurasi + restart.
