@@ -16,10 +16,11 @@ Modified from: Original Source
 python -m venv venv
 ```
 
-3. Aktifkan virtual environment (Windows):
+3. Buka PowerShell, lalu ubah execution policy (sekali saja) dan aktifkan virtual environment:
 
 ```
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser venv\Scripts\activate
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+venv\Scripts\activate
 ```
 
 4. Install dependensi:
@@ -28,14 +29,31 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser venv\Script
 pip install -r requirements.txt
 ```
 
-5. Jalankan aplikasi:
+5. Jalankan aplikasi dengan double-click file `.ps1` di root project, atau dari terminal:
 
 ```
-python app.py
+.\run_headcounter.ps1
+```
+
+atau
+
+```
+.\run_movcounter.ps1
 ```
 
 6. Browser akan otomatis terbuka di `http://127.0.0.1:5000/`.
    Jika tidak, buka secara manual di browser.
+
+7. Tutup terminal untuk menghentikan aplikasi.
+
+## Dua Aplikasi
+
+Proyek ini berisi dua aplikasi terpisah:
+
+| Aplikasi | Folder | Fungsi |
+|---|---|---|
+| **Head Counter** | `src/headcounter/` | Menghitung jumlah kepala di frame saat ini |
+| **Movement Counter** | `src/movement_counter/` | Menghitung pergerakan masuk/keluar melewati garis virtual |
 
 ## Membuat Shortcut Desktop
 
@@ -43,14 +61,14 @@ python app.py
 2. Jalankan perintah berikut:
 
 ```
-powershell -ExecutionPolicy Bypass -File tools/create_shortcut.ps1
+powershell -ExecutionPolicy Bypass -File create_shortcut.ps1
 ```
 
-3. Shortcut dengan nama **STASRG Crowded Detection** akan muncul di Desktop
-4. Double-click shortcut tersebut untuk menjalankan aplikasi
+3. Dua shortcut akan muncul di Desktop: **Head Counter** dan **Movement Counter**
+4. Double-click shortcut untuk menjalankan aplikasi. Terminal akan muncul - tutup terminal untuk menghentikan aplikasi.
 
-Catatan: Script akan otomatis mengkonversi `tools/logo_stasrg.png` menjadi `tools/logo_stasrg.ico` untuk dijadikan icon shortcut.
-Tidak perlu build executable - shortcut langsung menjalankan `app.py` menggunakan `pythonw.exe` (tanpa console window).
+Catatan: Script akan otomatis mengkonversi `tools/logo_stasrg.png` menjadi `tools/logo_stasrg.ico` jika file `.ico` belum ada.
+Shortcut menjalankan `run_headcounter.ps1` / `run_movcounter.ps1` via `powershell.exe`.
 
 ## Membangun Executable (.exe) - Opsional
 
@@ -70,19 +88,35 @@ python tools/build_app.py
 
 ## Struktur Proyek
 
-| File / Folder      | Keterangan                                                    |
-|--------------------|---------------------------------------------------------------|
-| `app.py`           | Aplikasi Flask utama (routing, API, streaming video)          |
-| `cv_processor_vertical.py` | Prosesor deteksi dengan garis virtual vertikal (kiri/kanan) |
-| `cv_processor_horizontal.py` | Prosesor deteksi dengan garis virtual horizontal (atas/bawah) |
-| `config.json`      | File konfigurasi (versi, posisi garis, kapasitas, dll)        |
-| `config_writer.py` | Helper untuk menyimpan konfigurasi ke disk secara aman        |
-| `path_resolver.py` | Resolver path untuk development dan build PyInstaller         |
-| `head.pt`          | Model YOLO untuk deteksi kepala                               |
-| `requirements.txt` | Daftar dependensi Python                                      |
-| `templates/`       | Template HTML (Flask)                                         |
-| `static/`          | Aset statis (CSS, JS, gambar)                                 |
-| `tools/`           | Script bantu (build, shortcut, konversi icon)                 |
+```
+root/
+├── run_headcounter.ps1          # Script launch Head Counter
+├── run_movcounter.ps1           # Script launch Movement Counter
+├── create_shortcut.ps1          # Script pembuat shortcut desktop
+├── requirements.txt             # Daftar dependensi (untuk kedua aplikasi)
+├── README.md
+├── src/
+│   ├── headcounter/             # Aplikasi Head Counter
+│   │   ├── app.py
+│   │   ├── survei2.pt
+│   │   ├── path_resolver.py
+│   │   ├── static/
+│   │   └── templates/
+│   └── movement_counter/        # Aplikasi Movement Counter
+│       ├── app.py
+│       ├── head.pt
+│       ├── config.json
+│       ├── config_writer.py
+│       ├── cv_processor_vertical.py
+│       ├── cv_processor_horizontal.py
+│       ├── path_resolver.py
+│       ├── static/
+│       └── templates/
+└── tools/                       # Script bantu
+    ├── build_app.py
+    ├── create_ico.py
+    └── pngico.py
+```
 
 ## Default Configuration
 

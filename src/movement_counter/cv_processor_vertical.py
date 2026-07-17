@@ -6,6 +6,7 @@ from ultralytics import YOLO
 from collections import OrderedDict
 import json
 from datetime import datetime
+from path_resolver import get_resource_path
 
 
 # Base CentroidTracker class (common to both versions)
@@ -171,10 +172,11 @@ class VerticalProcessor:
         return False, "Already in the requested state."
 
     def _load_model(self):
-        model_path = self.config["model_path"]
-        print(f"YOLOv8: Memuat Model untuk versi Vertikal dari {model_path}...")
+        model_file_name = self.config["model_path"]
+        absolute_model_path = get_resource_path(model_file_name)
+        print(f"YOLOv8: Memuat Model untuk versi Vertikal dari {absolute_model_path}...")
         try:
-            model = YOLO(model_path)
+            model = YOLO(absolute_model_path)
             print("YOLOv8: Status: Model berhasil dimuat.")
             return model
         except Exception as e:
