@@ -1,6 +1,17 @@
 # Changelog
 
-## [Unreleased] - 2026-07-17
+## [Unreleased] - 2026-07-18
+
+### Added
+- `docs/` folder: dokumentasi lengkap proyek
+  - `SETUP_ALAT.md`: persiapan alat, diagram blok hardware (Mermaid), troubleshooting
+  - `CARA_KERJA_PROGRAM.md`: penjelasan algoritma, diagram blok sistem, diagram alir per-frame
+  - `REFERENSI_PAPER.md`: daftar referensi paper
+  - `PERUBAHAN.md`: perbandingan lengkap vs versi original mahasiswa magang, kelebihan program baru
+- `docs/img/`: gambar pendukung dokumentasi (USB extender, housing CCTV, lensa wide)
+- File `temp/`: arsip versi original mahasiswa magang sebagai baseline perbandingan
+
+## [0.1.0] - 2026-07-17
 
 ### Added
 - `run_headcounter.ps1` dan `run_movcounter.ps1` untuk auto-aktivasi venv dan launch aplikasi
