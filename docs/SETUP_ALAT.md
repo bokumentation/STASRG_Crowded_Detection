@@ -57,7 +57,7 @@ Komponen dipasang di dalam housing menggunakan perekat double-tape industri. Nam
 > [!NOTE]
 > Dalam pengujian di lokasi mitra, kamera dapat terputus akibat gangguan fisik pada tiang atau koneksi di dalam housing yang longgar. Penanganan dilakukan dengan membuka housing dan memastikan seluruh koneksi kabel terpasang dengan baik. Koneksi USB merupakan titik yang paling sering mengalami masalah.
 
-#### Dokumentasi Komponen
+#### Referensi Foto Komponen (Rekomendasi: Lihat Dokumentasi di Folder Crowded Detection)
 
 **USB 2.0 Extender over LAN UTP Cat5e/6 RJ45:**
 
