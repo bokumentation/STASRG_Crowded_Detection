@@ -1,17 +1,26 @@
-# Cara Setup Perangkat Crowded Detection
+# Setup Perangkat Crowded Detection
 
-## Persiapan Alat
-- USB Kamera
-- Mini PC / Laptop (OS: Windows 11)
-- External Monitor
+## Spesifikasi Perangkat
 
-## Cara Kerja Alat
+| Komponen | Spesifikasi |
+|---|---|
+| Kamera | USB Webcam (Logitech C922 atau C270) |
+| Lens | Lensa Wide 0.45 Clip-On |
+| Komputasi | Mini PC atau Laptop dengan Windows 11 |
+| Display | External Monitor (HDMI/DisplayPort) |
+| Konektivitas | USB 2.0, Ethernet (untuk deployment jarak jauh) |
+
+## Arsitektur Sistem
+
+Sistem Crowded Detection menerima input video dari USB Kamera, memprosesnya menggunakan YOLOv8 Head Detection pada Mini PC, dan menampilkan hasilnya pada Display melalui dashboard berbasis web.
 
 ```
 USB Kamera -> Kabel USB -> Mini PC -> Display / Aplikasi
 ```
 
-### Diagram Blok Versi Langsung
+### Konfigurasi Langsung
+
+Pada konfigurasi ini, kamera terhubung langsung ke Mini PC melalui kabel USB tanpa perantara.
 
 ```mermaid
 flowchart LR
@@ -20,21 +29,12 @@ flowchart LR
     B --> D[Aplikasi Crowded Detection]
 ```
 
-### Catatan untuk Versi 2
+### Konfigurasi Deployment (Jarak Jauh)
 
-Versi "prototype deployment" menggunakan USB Kamera yang terhubung ke modul `USB 2.0 Extender over LAN UTP cable Cat5e/6 RJ45 - 4 USB port - jarak 120 meter` yang dipasangkan pada Housing CCTV (lihat di folder dokumentasi riset). Terdapat pengurangan kualitas video jika menggunakan modul tersebut.
+Konfigurasi ini digunakan untuk deployment di lapangan di mana kamera ditempatkan pada jarak 20-30 meter dari unit komputasi. Koneksi diperpanjang menggunakan modul **USB 2.0 Extender over LAN UTP Cat5e/6 RJ45** dengan kapasitas 4 port USB dan jangkauan hingga 120 meter.
 
-Komponen di dalam Housing CCTV terdiri dari:
-- Webcam Logitech C922 atau C270 yang dipasang Lensa Wide 0.45 Clip-On
-- USB Extender over Ethernet beserta adapternya
-- Keluaran 2 kabel berupa kabel 220V dan kabel ethernet dengan panjang sekitar 20-30m
-
-Pemasangan di dalam housing menggunakan "tape double tip" industri. Namun, karena koneksi USB, tidak ada jaminan bahwa port USB tersebut sering membuat USB kamera tidak terdeteksi.
-
-> [!NOTE]
-> Dalam pengujian mitra, terkadang kamera tidak terhubung karena tiang kesenggol atau koneksi di dalam housing kurang rapat. Hal ini bisa diperbaiki dengan membuka housing tersebut dan memastikan koneksi kabel antar komponen. Koneksi yang sering terlepas adalah USB.
-
-### Diagram Blok Versi Deployment
+> [!WARNING]
+> Penggunaan modul USB Extender dapat menyebabkan penurunan kualitas video.
 
 ```mermaid
 flowchart LR
@@ -44,19 +44,31 @@ flowchart LR
     D --> E[Display / Aplikasi]
 ```
 
-#### USB 2.0 Extender over LAN UTP cable Cat5e/6 RJ45
+#### Komponen Housing CCTV
+
+Housing CCTV berisi komponen-komponen berikut:
+
+- Webcam Logitech C922 atau C270 dengan Lensa Wide 0.45 Clip-On terpasang
+- Modul USB Extender over Ethernet (TX) beserta adaptor daya
+- Dua kabel keluar: kabel daya 220V dan kabel Ethernet UTP (panjang 20-30 meter)
+
+Komponen dipasang di dalam housing menggunakan perekat double-tape industri. Namun demikian, koneksi USB pada modul extender rentan terlepas akibat getaran atau gangguan fisik, yang dapat menyebabkan kamera tidak terdeteksi oleh sistem.
+
+> [!NOTE]
+> Dalam pengujian di lokasi mitra, kamera dapat terputus akibat gangguan fisik pada tiang atau koneksi di dalam housing yang longgar. Penanganan dilakukan dengan membuka housing dan memastikan seluruh koneksi kabel terpasang dengan baik. Koneksi USB merupakan titik yang paling sering mengalami masalah.
+
+#### Dokumentasi Komponen
+
+**USB 2.0 Extender over LAN UTP Cat5e/6 RJ45:**
 
 ![alt text](img/4-port-USB-Extender.jpg)
 
-#### Housing CCTV, Kabel UTP, Lensa Wide Clip-On
-
+**Housing CCTV, Kabel UTP, dan Lensa Wide Clip-On:**
 
 ![alt text](img/housing-cctv.png)
 
 ![alt text](img/lensa-wide.png)
 
-
 ---
 
-Note:
-- Semua gambar memiliki copyright ke yang punya
+Seluruh gambar merupakan hak cipta pemiliknya masing-masing.
