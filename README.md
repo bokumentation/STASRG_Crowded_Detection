@@ -1,6 +1,7 @@
-# Initial STAS-RG Crowded Detection
+# STAS-RG Crowded Detection
 
-Modified from: Original Source
+[![Windows](https://img.shields.io/badge/Tested_on-Windows_11-0078D6?logo=windows&logoColor=white)]()
+[![Linux](https://img.shields.io/badge/Tested_on-Linux-FCC624?logo=linux&logoColor=black)]()
 
 ## Prasyarat
 
@@ -70,13 +71,57 @@ Catatan: Script akan otomatis mengkonversi `tools/logo_stasrg.png` menjadi `tool
 Shortcut menjalankan `run_headcounter.ps1` / `run_movcounter.ps1` via `powershell.exe`.
 
 
+## Cara Menjalankan di Linux
+
+1. Buka terminal di root folder proyek
+2. Buat virtual environment:
+
+```
+python3 -m venv venv
+```
+
+3. Aktifkan virtual environment:
+
+```
+source venv/bin/activate
+```
+
+4. Install dependensi:
+
+```
+pip install -r requirements.txt
+```
+
+5. Beri izin eksekusi pada script:
+
+```
+chmod +x run_headcounter.sh run_movcounter.sh
+```
+
+6. Jalankan aplikasi:
+
+```
+./run_headcounter.sh
+```
+
+atau
+
+```
+./run_movcounter.sh
+```
+
+7. Browser akan otomatis terbuka di `http://127.0.0.1:5000/`.
+   Tekan `Ctrl+C` di terminal untuk menghentikan aplikasi.
+
 ## Struktur Proyek
 
 ```
 root/
-├── run_headcounter.ps1          # Script launch Head Counter
-├── run_movcounter.ps1           # Script launch Movement Counter
-├── create_shortcut.ps1          # Script pembuat shortcut desktop
+├── run_headcounter.ps1          # Script launch Head Counter (Windows)
+├── run_movcounter.ps1           # Script launch Movement Counter (Windows)
+├── run_headcounter.sh           # Script launch Head Counter (Linux)
+├── run_movcounter.sh            # Script launch Movement Counter (Linux)
+├── create_shortcut.ps1          # Script pembuat shortcut desktop (Windows)
 ├── requirements.txt             # Daftar dependensi (untuk kedua aplikasi)
 ├── README.md
 ├── src/
@@ -96,10 +141,15 @@ root/
 │       ├── path_resolver.py
 │       ├── static/
 │       └── templates/
+├── docs/                        # Dokumentasi
+│   ├── SETUP_ALAT.md
+│   ├── CARA_KERJA_PROGRAM.md
+│   ├── REFERENSI_PAPER.md
+│   └── PERUBAHAN.md
 └── tools/                       # Script bantu
-    ├── build_app.py
     ├── create_ico.py
-    └── pngico.py
+    ├── logo_stasrg.png
+    └── logo_stasrg.ico
 ```
 
 ## Default Configuration
