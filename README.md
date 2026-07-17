@@ -19,8 +19,7 @@ python -m venv venv
 3. Buka PowerShell, lalu ubah execution policy (sekali saja) dan aktifkan virtual environment:
 
 ```
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-venv\Scripts\activate
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser; venv\Scripts\activate
 ```
 
 4. Install dependensi:
@@ -70,21 +69,6 @@ powershell -ExecutionPolicy Bypass -File create_shortcut.ps1
 Catatan: Script akan otomatis mengkonversi `tools/logo_stasrg.png` menjadi `tools/logo_stasrg.ico` jika file `.ico` belum ada.
 Shortcut menjalankan `run_headcounter.ps1` / `run_movcounter.ps1` via `powershell.exe`.
 
-## Membangun Executable (.exe) - Opsional
-
-1. Pastikan PyInstaller terinstal:
-
-```
-pip install pyinstaller
-```
-
-2. Jalankan build script:
-
-```
-python tools/build_app.py
-```
-
-3. Hasil build akan berada di folder `output/` dengan nama folder bernomor (contoh: `STASRG_Crowded_Detection_1`)
 
 ## Struktur Proyek
 
