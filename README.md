@@ -1,7 +1,15 @@
-# STAS-RG Crowded Detection
+<div align="center">
 
-[![Windows](https://img.shields.io/badge/Tested_on-Windows_11-0078D6?logo=windows&logoColor=white)]()
-[![Linux](https://img.shields.io/badge/Tested_on-Linux-FCC624?logo=linux&logoColor=black)]()
+<p> Laboratorium STAS-RG </p>
+
+<img src=tools/logo_stasrg_full.png alt="Description" width="200">
+
+<p> Crowd Monitoring: Head & Movement Counter</p>
+
+[![Windows](https://img.shields.io/badge/Windows_11-0078D6?logo=windows&logoColor=white)]()
+[![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black)]()
+
+</div>
 
 ## Prasyarat
 
